@@ -4,16 +4,18 @@
   const C=window.Correos, $=id=>document.getElementById(id), KEY='valijas-once-v1';
   const original=C.validateCenters(JSON.parse($('initial-centers').textContent));
   let state={schema:1,centros:original,config:{...C.DEFAULTS},counters:{},draft:{}};
-  let storageOK=true, storageDamaged=false, lastFile=null, editing=null, fileAction=null, busy=false;
+  let storageOK=true, storageDamaged=false, lastFile=null, editing=null, fileAction=null, busy=false, messageSource=null;
   const escape=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  function message(s,error=false) { $('message').hidden=false; $('message').textContent=s; $('message').className=error?'error':''; }
+  function message(s,error=false,source=null) { $('message').hidden=false; $('message').textContent=s; $('message').className=error?'error':''; messageSource=source; }
+  // Quita un aviso solo si sigue en pantalla y lo puso ese mismo problema.
+  function clearMessage(source) { if(messageSource!==source) return; $('message').hidden=true; $('message').textContent=''; $('message').className=''; messageSource=null; }
   function parseState(raw) {
     const data=JSON.parse(raw);
     if (data.schema!==1) throw Error('Versión de copia no soportada.');
     const centros=C.validateCenters(data.centros), config={...data.config}; C.validateConfig(config);
     const counters=C.validateCounters(data.counters), draft={};
     if (data.draft && typeof data.draft==='object') for(const c of centros) {
-      const n=data.draft[c.codigo]; if(Number.isInteger(n) && n>=0 && n<=150) draft[c.codigo]=n;
+      const n=data.draft[c.codigo]; if(Number.isInteger(n) && n>=0 && n<=150) draft[c.codigo]=C.centerErrors(c).length?0:n;
     }
     return {schema:1,centros,config,counters,draft};
   }
@@ -55,7 +57,8 @@
     if(id==='centros') renderCenters();
     document.title='Valijas ONCE · '+({remesa:'Envío de valijas',centros:'Centros',ajustes:'Configuración',ayuda:'Ayuda'}[id]);
   }
-  const quantity=c=>state.draft[c.codigo]??0;
+  // Un centro bloqueado no se puede editar en la tabla: nunca cuenta ni se envía.
+  const quantity=c=>C.centerErrors(c).length?0:(state.draft[c.codigo]??0);
   const shortName=c=>c.localidad==='A CORUÑA'?'A Coruña':c.localidad.toLocaleLowerCase('es').replace(/(^|\s)\S/g,x=>x.toLocaleUpperCase('es'));
   function renderRows() {
     const q=$('search').value.toLocaleLowerCase('es');
@@ -82,7 +85,8 @@
     $('service').textContent=state.config.producto==='S0235'?'Paq Premium':'Paq Estándar';
     $('dimensions').textContent=`${state.config.peso} g · ${state.config.largo} × ${state.config.alto} × ${state.config.ancho} cm`;
     $('generate').disabled=!total||invalid||total>150||busy;
-    if(total>150) message('El envío supera los 150 paquetes. Reduce las cantidades o prepara varios archivos.',true);
+    if(invalid) message('Los bultos deben ser un número entero entre 0 y 150.',true,'quantity'); else clearMessage('quantity');
+    if(total>150) message('El envío supera los 150 paquetes. Reduce las cantidades o prepara varios archivos.',true,'limit'); else clearMessage('limit');
   }
   function download(bytes,name,type) {
     const blob=new Blob([bytes],{type}), url=URL.createObjectURL(blob), a=document.createElement('a');
@@ -131,7 +135,6 @@
     const valid=Number.isInteger(n)&&n>=0&&n<=150;
     input.setAttribute('aria-invalid',String(!valid));
     input.closest('tr').classList.toggle('selected',valid&&n>0);
-    if(!valid)message('Los bultos deben ser un número entero entre 0 y 150.',true);
     persist();renderSummary();
   });
   $('destinations').addEventListener('click',event=>{
