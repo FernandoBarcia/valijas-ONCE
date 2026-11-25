@@ -54,3 +54,23 @@ test('agenda de ejemplo: genera un envío sin modificar datos',()=>{
   const r=C.generate({centros,destinos:centros.map(c=>({codigo:c.codigo,bultos:1})),fecha:'20261125'});
   assert.equal(r.records.length,1);assert.equal(JSON.stringify(centros),before);
 });
+test('cantidades: vacío es 0 y solo se aceptan enteros sin signo',()=>{
+  assert.equal(C.quantityFrom(''),0);assert.equal(C.quantityFrom('7'),7);assert.equal(C.quantityFrom('007'),7);
+  for(const v of ['-','-1','1.5','1e2','abc',' 3',undefined])assert.ok(Number.isNaN(C.quantityFrom(v)),String(v));
+  assert.ok(Number.isNaN(C.quantityFrom('',true)),'entrada que el navegador no entiende');
+});
+test('cantidades guardadas: centros bloqueados a 0 y valores raros fuera',()=>{
+  const centros=[base,{...base,codigo:'TEST-2',activo:false},{...base,codigo:'TEST-3',validado:false},{...base,codigo:'TEST-4'}];
+  assert.deepEqual(C.cleanDraft(centros,{'TEST-1':4,'TEST-2':7,'TEST-3':2,'TEST-4':1.5,'OTRO':3}),{'TEST-1':4,'TEST-2':0,'TEST-3':0});
+  assert.deepEqual(C.cleanDraft(centros,null),{});
+});
+test('revisión: un grupo por destino con bultos y primera y última referencia',()=>{
+  const centros=[base,{...base,codigo:'TEST-2',nombreCentro:'OTRO CENTRO',cp:'15003',localidad:'A CORUÑA'}];
+  const r=C.generate({centros,destinos:[{codigo:'TEST-1',bultos:3},{codigo:'TEST-2',bultos:1}],fecha:'20261125',inicio:8});
+  const g=C.reviewGroups(r.records);
+  assert.equal(g.length,2);
+  assert.deepEqual([g[0].centro,g[0].bultos,g[0].desde,g[0].hasta],['CENTRO DE PRUEBA',3,'VALIJA-20261125-008','VALIJA-20261125-010']);
+  assert.deepEqual([g[1].centro,g[1].bultos,g[1].desde,g[1].hasta,g[1].cp],['OTRO CENTRO',1,'VALIJA-20261125-011','VALIJA-20261125-011','15003']);
+  assert.equal(g[0].destinatario,'MARÍA CAMANO TOURINAN','los nombres salen como en el TXT');
+  assert.equal(g[0].direccion,'C PRUEBA 1');
+});

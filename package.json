@@ -1,6 +1,6 @@
 {
   "name": "valijas-once-local",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "private": true,
   "description": "Herramienta para facilitar el envío de valijas",
   "scripts": {

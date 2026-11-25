@@ -20,6 +20,7 @@ Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguien
 ## Funciones
 
 - Cantidades por centro y resumen del envío.
+- Revisión opcional antes de generar: destinos, bultos y referencias tal como irán en el TXT, sin gastar referencias.
 - Edición e importación de centros.
 - Un registro independiente por bulto, con 186 campos, tabuladores y CRLF.
 - Referencias correlativas, configuración del producto y características.
