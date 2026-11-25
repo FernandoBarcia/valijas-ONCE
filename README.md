@@ -13,7 +13,7 @@ npm test
 npm run build
 ```
 
-Abre el HTML versionado que produce el build en Safari o Chrome. La aplicación funciona sin servidor. El repositorio contiene únicamente centros ficticios y un código etiquetador de ejemplo (`TEST`). Configura el código real en la aplicación antes de preparar envíos.
+Abre el HTML versionado que produce el build en Safari o Chrome. La aplicación funciona sin servidor. El repositorio contiene únicamente centros ficticios. El código etiquetador por defecto es `9KAQ`; se puede cambiar en Configuración.
 
 Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguiendo `data/centros.example.json` y reconstruye. Ese archivo está excluido de Git.
 

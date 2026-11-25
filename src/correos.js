@@ -5,7 +5,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
   const VERSION = '1.1.0';
-  const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'TEST',
+  const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
   // Posiciones humanas (1..186), contrastadas con PlantillaFicheroFormatoUnico.xls.
