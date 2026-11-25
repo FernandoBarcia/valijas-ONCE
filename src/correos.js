@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.0.7';
+  const VERSION = '1.1.0';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'TEST',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -189,6 +189,35 @@
     const bytes=encode(txt,config.codificacion);
     return {records,txt,bytes,siguiente:inicio+records.length,referencias:records.map(r=>r[45])};
   }
+  // Cantidad escrita en una casilla: vacío es 0; cualquier cosa que no sea un entero sin signo es NaN.
+  function quantityFrom(value, badInput=false) {
+    if (badInput) return NaN;
+    if (value==='') return 0;
+    return typeof value==='string' && /^\d+$/.test(value) ? Number(value) : NaN;
+  }
+  // Cantidades guardadas: solo enteros de 0 a 150, y 0 para los centros que no pueden recibir envíos.
+  function cleanDraft(centros, draft) {
+    const result={};
+    if (!draft || typeof draft!=='object') return result;
+    for (const c of centros) {
+      const n=draft[c.codigo];
+      if (Number.isInteger(n) && n>=0 && n<=150) result[c.codigo]=centerErrors(c).length?0:n;
+    }
+    return result;
+  }
+  // Resumen para revisar: un grupo por destino, con los datos tal como van en el TXT.
+  function reviewGroups(records) {
+    const groups=[], get=(r,k)=>r[F[k]-1];
+    for (const r of records) {
+      const destinatario=[get(r,'nombre'),get(r,'apellido1'),get(r,'apellido2')].filter(Boolean).join(' ');
+      const direccion=[get(r,'tipoVia'),get(r,'via'),get(r,'numero'),get(r,'complemento')].filter(Boolean).join(' ');
+      const key=[get(r,'empresa'),destinatario,direccion,get(r,'cp')].join('|'), last=groups.at(-1);
+      if (last && last.key===key) { last.bultos++; last.hasta=get(r,'referencia'); continue; }
+      groups.push({key,centro:get(r,'empresa'),destinatario,direccion,cp:get(r,'cp'),localidad:get(r,'localidad'),
+        provincia:get(r,'provincia'),bultos:1,desde:get(r,'referencia'),hasta:get(r,'referencia')});
+    }
+    return groups.map(({key,...g})=>g);
+  }
   function validateCounters(counters) {
     if (!counters || typeof counters!=='object' || Array.isArray(counters)) fail('Contadores no válidos.');
     const result={};
@@ -204,5 +233,6 @@
     return result;
   }
   return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,validateConfig,dateKey,
-    normalizeName,encode,validateRecords,validateTXT,generate,validateCounters,mergeCounters};
+    normalizeName,encode,validateRecords,validateTXT,generate,validateCounters,mergeCounters,
+    quantityFrom,cleanDraft,reviewGroups};
 });

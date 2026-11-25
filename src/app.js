@@ -13,10 +13,7 @@
     const data=JSON.parse(raw);
     if (data.schema!==1) throw Error('Versión de copia no soportada.');
     const centros=C.validateCenters(data.centros), config={...data.config}; C.validateConfig(config);
-    const counters=C.validateCounters(data.counters), draft={};
-    if (data.draft && typeof data.draft==='object') for(const c of centros) {
-      const n=data.draft[c.codigo]; if(Number.isInteger(n) && n>=0 && n<=150) draft[c.codigo]=C.centerErrors(c).length?0:n;
-    }
+    const counters=C.validateCounters(data.counters), draft=C.cleanDraft(centros,data.draft);
     return {schema:1,centros,config,counters,draft};
   }
   try {
@@ -45,8 +42,20 @@
   const counterKey=()=>state.config.prefijo+':'+C.dateKey();
   function minimumStart() { return state.counters[counterKey()]||1; }
   function refreshCounter() {
-    $('start').min=minimumStart(); $('start').value=minimumStart(); updateReference();
+    $('start').min=minimumStart(); $('start').value=minimumStart(); checkStart();
   }
+  function startValid() {
+    const n=C.quantityFrom($('start').value,$('start').validity.badInput);
+    return Number.isInteger(n) && n>=minimumStart() && n<=999999;
+  }
+  function checkStart() {
+    const valid=startValid();
+    $('start').setAttribute('aria-invalid',String(!valid));
+    if(valid) clearMessage('start'); else message(`El siguiente número de referencia debe ser un entero entre ${minimumStart()} y 999999.`,true,'start');
+    updateReference(); renderSummary();
+  }
+  // Tras cambiar algo, el error del último intento de generar ya no vale.
+  const edited=()=>clearMessage('generate');
   function updateReference() {
     $('reference-example').textContent=`${state.config.prefijo}-${C.dateKey()}-${String($('start').value||1).padStart(3,'0')}`;
   }
@@ -84,7 +93,7 @@
     $('summary-list').innerHTML=selected.map(([c,n])=>`<li><span>${escape(shortName(c))}</span><b>${n}</b></li>`).join('');
     $('service').textContent=state.config.producto==='S0235'?'Paq Premium':'Paq Estándar';
     $('dimensions').textContent=`${state.config.peso} g · ${state.config.largo} × ${state.config.alto} × ${state.config.ancho} cm`;
-    $('generate').disabled=!total||invalid||total>150||busy;
+    $('generate').disabled=$('review').disabled=!total||invalid||total>150||busy||!startValid();
     if(invalid) message('Los bultos deben ser un número entero entre 0 y 150.',true,'quantity'); else clearMessage('quantity');
     if(total>150) message('El envío supera los 150 paquetes. Reduce las cantidades o prepara varios archivos.',true,'limit'); else clearMessage('limit');
   }
@@ -120,18 +129,33 @@
     message(`TXT preparado: ${result.records.length} paquetes. Descarga iniciada.\nReferencias: ${result.referencias[0]} a ${result.referencias.at(-1)}.\nArchivo listo para importar en Correos.${saved?'':'\nNo se pudo guardar el contador: exporta ahora una copia completa antes de cerrar.'}`);
     $('message').scrollIntoView({block:'nearest',behavior:'smooth'});
   }
-  $('generate').addEventListener('click',async()=>{
+  async function runGenerate() {
     if(busy)return; busy=true; renderSummary();
     try { if(navigator.locks?.request) await navigator.locks.request(KEY,generateNow); else generateNow(); }
-    catch(e) {message(e.message,true);}
+    catch(e) {message(e.message,true,'generate');}
     finally {busy=false; renderSummary();}
-  });
+  }
+  $('generate').addEventListener('click',runGenerate);
+  // Revisar: el mismo cálculo que Generar, sin guardar contadores ni descargar nada.
+  $('review').onclick=()=>{
+    try {
+      const destinos=state.centros.filter(c=>quantity(c)!==0).map(c=>({codigo:c.codigo,bultos:quantity(c)}));
+      const result=C.generate({centros:state.centros,destinos,config:state.config,inicio:Number($('start').value)});
+      const groups=C.reviewGroups(result.records), tail=ref=>ref.slice(ref.lastIndexOf('-')+1);
+      const encoding={'windows-1252':'Windows-1252','utf-8':'UTF-8','utf-8-bom':'UTF-8 con BOM'}[state.config.codificacion];
+      $('review-summary').textContent=`${result.records.length} ${result.records.length===1?'paquete':'paquetes'} para ${groups.length} ${groups.length===1?'destino':'destinos'} · ${state.config.producto==='S0235'?'Paq Premium':'Paq Estándar'} · ${state.config.peso} g · ${state.config.largo} × ${state.config.alto} × ${state.config.ancho} cm · Referencias ${result.referencias[0]} a ${result.referencias.at(-1)} · ${encoding}`;
+      $('review-rows').innerHTML=groups.map(g=>`<tr><td><span class="destination-title">${escape(g.centro)}</span><span class="destination-meta">${escape(g.destinatario)}</span><span class="destination-meta">${escape(g.direccion)} · ${escape(g.cp)} ${escape(g.localidad)} (${escape(g.provincia)})</span></td><td>${g.bultos}</td><td title="${escape(g.desde)}${g.bultos>1?' a '+escape(g.hasta):''}">${escape(tail(g.desde))}${g.bultos>1?` a ${escape(tail(g.hasta))}`:''}</td></tr>`).join('');
+      edited(); $('review-dialog').showModal();
+    } catch(e) { message(e.message,true,'generate'); }
+  };
+  $('review-generate').onclick=()=>{ $('review-dialog').close(); runGenerate(); };
+  $('close-review').onclick=$('review-back').onclick=()=>$('review-dialog').close();
   $('redownload').onclick=()=>{if(lastFile)download(lastFile.bytes,lastFile.name,'text/plain');};
   $('destinations').addEventListener('input',event=>{
     const input=event.target;if(!input.matches('.qty'))return;
     const id=input.closest('tr').dataset.center;
-    const n=input.value===''?0:Number(input.value);
-    state.draft[id]=n;
+    const n=C.quantityFrom(input.value,input.validity.badInput);
+    state.draft[id]=n; edited();
     const valid=Number.isInteger(n)&&n>=0&&n<=150;
     input.setAttribute('aria-invalid',String(!valid));
     input.closest('tr').classList.toggle('selected',valid&&n>0);
@@ -139,14 +163,14 @@
   });
   $('destinations').addEventListener('click',event=>{
     const button=event.target.closest('.remove');if(!button)return;
-    state.draft[button.closest('tr').dataset.center]=0;persist();renderRows();
+    state.draft[button.closest('tr').dataset.center]=0;edited();persist();renderRows();
   });
-  $('one-each').onclick=()=>{state.draft=Object.fromEntries(state.centros.map(c=>[c.codigo,C.centerErrors(c).length?0:1]));persist();renderRows();};
+  $('one-each').onclick=()=>{state.draft=Object.fromEntries(state.centros.map(c=>[c.codigo,C.centerErrors(c).length?0:1]));edited();persist();renderRows();};
   $('new').onclick=()=>{
     if(Object.values(state.draft).some(n=>n!==0)&&!confirm('¿Vaciar las cantidades para preparar un nuevo envío? Los contadores se conservan.'))return;
     state.draft={};persist();renderRows();refreshCounter();message('Nuevo envío preparado.');
   };
-  $('search').oninput=renderRows; $('start').oninput=updateReference;
+  $('search').oninput=renderRows; $('start').oninput=()=>{edited();checkStart();};
   document.querySelectorAll('nav button').forEach(el=>el.onclick=()=>showPage(el.dataset.page));
   $('change-settings').onclick=()=>showPage('ajustes');
   function fillSettings() {
@@ -157,7 +181,7 @@
     try {
       const data=Object.fromEntries(new FormData(event.target));data.normalizarEnie=event.target.elements.normalizarEnie.checked;
       C.validateConfig(data);state.config=data;persist();refreshCounter();renderSummary();message('Configuración guardada. Se aplicará al próximo TXT.');
-    }catch(e){message(e.message,true);}
+    }catch(e){message(e.message,true,'settings');}
   };
   function renderCenters() {
     $('center-cards').innerHTML=state.centros.map(c=>{

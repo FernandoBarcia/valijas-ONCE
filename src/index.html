@@ -24,7 +24,7 @@
           </div>
           <aside class="card summary" aria-label="Resumen del envío"><p class="eyebrow">RESUMEN DEL ENVÍO</p><div class="total"><strong id="total">0</strong><span>paquetes</span></div><p id="dest-total">Ningún destino seleccionado</p><ul id="summary-list"></ul><dl class="shipment-info"><div><dt>Servicio</dt><dd id="service"></dd></div><div><dt>Por paquete</dt><dd id="dimensions"></dd></div><div><dt>Expedición</dt><dd>1 por paquete</dd></div></dl><button class="quiet" id="change-settings">Cambiar características</button>
             <label class="next-label" for="start">Siguiente número de referencia</label><input id="start" type="number" min="1" max="999999" step="1" value="1"><small id="reference-example"></small>
-            <button id="generate" class="primary">Generar TXT Correos <span aria-hidden="true">↓</span></button><button id="redownload" class="secondary" hidden>Descargar de nuevo el último TXT</button>
+            <button id="generate" class="primary">Generar TXT Correos <span aria-hidden="true">↓</span></button><button id="review" class="secondary">Revisar antes de generar</button><button id="redownload" class="secondary" hidden>Descargar de nuevo el último TXT</button>
             <p class="hint">Después, adjunta el TXT en <strong>Importar fichero</strong> de Correos.</p>
           </aside>
         </div>
@@ -48,7 +48,7 @@
         <div class="card help"><ol>
           <li><strong>Configura el envío.</strong> Selecciona el producto, el peso y las medidas. Si los bultos tienen características diferentes, prepara archivos separados.</li>
           <li><strong>Selecciona los destinos.</strong> En Envío de valijas, indica los bultos de cada centro. Deja en cero los centros que no recibirán valijas.</li>
-          <li><strong>Genera el archivo.</strong> Pulsa Generar TXT Correos. El archivo se guardará en la carpeta de descargas.</li>
+          <li><strong>Genera el archivo.</strong> Pulsa Generar TXT Correos. El archivo se guardará en la carpeta de descargas. Si quieres comprobarlo antes, pulsa Revisar antes de generar: verás cada destino, sus bultos y sus referencias, y podrás generar desde allí o volver a cambiar las cantidades sin gastar referencias.</li>
           <li><strong>Importa el archivo en Correos.</strong> Selecciona el TXT en Importar fichero y pulsa Iniciar carga del documento. Continúa el proceso para confirmar los envíos e imprimir las etiquetas.</li>
         </ol><h2>Centros</h2><p>Un centro está disponible cuando está activo, tiene un destinatario validado y contiene los datos necesarios. Para modificarlo, selecciona Editar centro.</p>
         <h2>Referencias y descargas</h2><p>Nuevo envío vacía las cantidades y conserva el contador de referencias. Generar TXT Correos asigna referencias nuevas. Descargar de nuevo recupera el último archivo de la sesión sin cambiar las referencias.</p>
@@ -60,6 +60,7 @@
   </div>
   <input type="file" id="file-input" accept=".json,application/json" hidden>
   <dialog id="center-dialog" aria-labelledby="dialog-title"><form id="center-form"><div class="dialog-heading"><h2 id="dialog-title">Editar centro</h2><button type="button" id="close-dialog" class="icon-button" aria-label="Cerrar">×</button></div><div class="form-grid" id="center-fields"></div><label class="checkbox"><input type="checkbox" name="activo">Centro activo</label><label class="checkbox"><input type="checkbox" name="validado">He revisado y validado el destinatario</label><p id="center-error" role="alert"></p><div class="toolbar"><button type="submit" class="primary">Guardar centro</button><button type="button" id="cancel-center" class="secondary">Cancelar</button></div></form></dialog>
+  <dialog id="review-dialog" aria-labelledby="review-title"><div class="dialog-heading"><h2 id="review-title">Revisar envío</h2><button type="button" id="close-review" class="icon-button" aria-label="Cerrar">×</button></div><p id="review-summary" class="review-summary"></p><div class="table-wrap review-table"><table><caption class="sr-only">Destinos, bultos y referencias del envío</caption><thead><tr><th scope="col">Destino</th><th scope="col">Bultos</th><th scope="col">Nº ref.</th></tr></thead><tbody id="review-rows"></tbody></table></div><p class="hint">Nombres y direcciones tal como irán en el TXT. Revisar no gasta referencias: solo Generar las reserva.</p><div class="toolbar"><button type="button" id="review-generate" class="primary">Generar TXT Correos</button><button type="button" id="review-back" class="secondary">Volver y cambiar</button></div></dialog>
   <script id="initial-centers" type="application/json">/* CENTERS */</script>
   <script>/* CORE */</script>
   <script>/* APP */</script>
