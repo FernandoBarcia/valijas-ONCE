@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>Valijas ONCE · Envío de valijas</title>
+  <style>/* STYLES */</style>
+</head>
+<body>
+  <a class="skip" href="#main">Saltar al contenido</a>
+  <header><div class="brand"><span class="brandmark" aria-hidden="true">↗</span><div><strong>Valijas ONCE</strong><span>Envío de valijas · Galicia</span></div></div><span id="header-version" class="release-version"></span></header>
+  <div class="shell">
+    <nav aria-label="Secciones"><button data-page="remesa" class="active" aria-current="page">Envío de valijas</button><button data-page="centros">Centros <span id="center-count"></span></button><button data-page="ajustes">Configuración</button><button data-page="ayuda">Cómo usarla</button></nav>
+    <main id="main">
+      <div id="message" role="status" aria-live="polite" hidden></div>
+      <section id="remesa" class="page">
+        <div class="page-heading"><div><p class="eyebrow" id="today"></p><h1>Envío de valijas</h1><p>Selecciona los destinos e indica el número de bultos.</p></div><button id="new" class="secondary">Nuevo envío</button></div>
+        <div class="workspace">
+          <div class="card destinations"><div class="card-heading"><div><h2>Centros destinatarios</h2><p>Deja en 0 los centros a los que hoy no envías.</p></div><button id="one-each" class="quiet">1 a cada centro disponible</button></div>
+            <label class="search"><span>Buscar centro o localidad</span><input id="search" type="search" placeholder="Por ejemplo, Lugo" autocomplete="off"></label>
+            <div class="table-wrap"><table><caption class="sr-only">Centros y cantidades del envío</caption><thead><tr><th scope="col">Destino</th><th scope="col">Bultos</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead><tbody id="destinations"></tbody></table></div>
+            <p class="table-foot" id="available"></p>
+          </div>
+          <aside class="card summary" aria-label="Resumen del envío"><p class="eyebrow">RESUMEN DEL ENVÍO</p><div class="total"><strong id="total">0</strong><span>paquetes</span></div><p id="dest-total">Ningún destino seleccionado</p><ul id="summary-list"></ul><dl class="shipment-info"><div><dt>Servicio</dt><dd id="service"></dd></div><div><dt>Por paquete</dt><dd id="dimensions"></dd></div><div><dt>Expedición</dt><dd>1 por paquete</dd></div></dl><button class="quiet" id="change-settings">Cambiar características</button>
+            <label class="next-label" for="start">Siguiente número de referencia</label><input id="start" type="number" min="1" max="999999" step="1" value="1"><small id="reference-example"></small>
+            <button id="generate" class="primary">Generar TXT Correos <span aria-hidden="true">↓</span></button><button id="redownload" class="secondary" hidden>Descargar de nuevo el último TXT</button>
+            <p class="hint">Después, adjunta el TXT en <strong>Importar fichero</strong> de Correos.</p>
+          </aside>
+        </div>
+      </section>
+      <section id="centros" class="page" hidden><div class="page-heading"><div><p class="eyebrow">DESTINATARIOS</p><h1>Centros</h1><p>Gestiona los destinatarios y las direcciones de los centros.</p></div><button class="primary" id="add-center">Añadir centro</button></div><div class="toolbar"><button id="import-centers" class="secondary">Importar centros JSON</button><button id="export-centers" class="secondary">Exportar centros JSON</button></div><div id="center-cards" class="center-grid"></div></section>
+      <section id="ajustes" class="page" hidden><div class="page-heading"><div><p class="eyebrow">VALORES HABITUALES</p><h1>Configuración de Correos</h1><p>Características comunes a todos los bultos del envío.</p></div></div><form id="settings" class="card form-card"><div class="form-grid">
+        <label>Producto<select name="producto"><option value="S0235">Paq Premium · Domicilio (S0235)</option><option value="S0132">Paq Estándar · Domicilio (S0132)</option></select></label>
+        <label>Código etiquetador<input name="etiquetador" maxlength="4" required></label>
+        <label>Peso por paquete (g)<input name="peso" type="number" min="1" max="99999" step="1" required></label>
+        <label>Largo (cm)<input name="largo" type="number" min="1" max="999" step="1" required></label>
+        <label>Alto (cm)<input name="alto" type="number" min="1" max="999" step="1" required></label>
+        <label>Ancho (cm)<input name="ancho" type="number" min="1" max="999" step="1" required></label>
+        <label>Prefijo de referencia<input name="prefijo" maxlength="20" required></label>
+        <label>Codificación del TXT<select name="codificacion"><option value="windows-1252">Windows-1252 (ANSI occidental)</option><option value="utf-8">UTF-8 sin BOM</option><option value="utf-8-bom">UTF-8 con BOM</option></select></label>
+        <label>Estructura<select name="estructura"><option value="2018v002">2018v002 · 186 campos</option></select></label><label>País<select name="pais"><option value="ES">España (ES)</option></select></label><label>Modalidad<select name="modalidad"><option value="ST">Domicilio (ST)</option></select></label>
+      </div><label class="checkbox"><input name="normalizarEnie" type="checkbox">Cambiar Ñ por N solo en nombre y apellidos al exportar</label><p class="hint">Este ajuste solo afecta al archivo TXT. Las localidades y provincias conservan la Ñ.</p><p class="hint">Envíos nacionales a domicilio. El remitente corresponde a la cuenta de Correos.</p><button type="submit" class="primary">Guardar configuración</button></form>
+        <div class="card backup"><h2>Copia de seguridad</h2><p>Guarda o restaura los centros, la configuración y los contadores de referencias.</p><div class="toolbar"><button id="export-backup" class="secondary">Guardar copia completa</button><button id="import-backup" class="secondary">Restaurar copia</button></div><p id="storage-status" class="hint"></p></div>
+      </section>
+      <section id="ayuda" class="page" hidden>
+        <div class="page-heading"><div><p class="eyebrow">AYUDA</p><h1>Cómo enviar valijas</h1></div></div>
+        <div class="card help"><ol>
+          <li><strong>Configura el envío.</strong> Selecciona el producto, el peso y las medidas. Si los bultos tienen características diferentes, prepara archivos separados.</li>
+          <li><strong>Selecciona los destinos.</strong> En Envío de valijas, indica los bultos de cada centro. Deja en cero los centros que no recibirán valijas.</li>
+          <li><strong>Genera el archivo.</strong> Pulsa Generar TXT Correos. El archivo se guardará en la carpeta de descargas.</li>
+          <li><strong>Importa el archivo en Correos.</strong> Selecciona el TXT en Importar fichero y pulsa Iniciar carga del documento. Continúa el proceso para confirmar los envíos e imprimir las etiquetas.</li>
+        </ol><h2>Centros</h2><p>Un centro está disponible cuando está activo, tiene un destinatario validado y contiene los datos necesarios. Para modificarlo, selecciona Editar centro.</p>
+        <h2>Referencias y descargas</h2><p>Nuevo envío vacía las cantidades y conserva el contador de referencias. Generar TXT Correos asigna referencias nuevas. Descargar de nuevo recupera el último archivo de la sesión sin cambiar las referencias.</p>
+        <h2>Copias de seguridad</h2><p>En Configuración puedes guardar y restaurar una copia completa. Incluye los centros, la configuración y los contadores. Para cambiar de navegador u ordenador, restaura la copia más reciente y utiliza una sola pestaña para generar archivos.</p>
+        <h2>Archivos TXT</h2><p>Importa el archivo directamente en Correos. No lo vuelvas a guardar con Excel, ya que puede alterar su formato.</p></div>
+      </section>
+    </main>
+    <footer><span>Valijas ONCE <span id="version"></span></span><span>Creado por Fernando Barcia · <a href="mailto:fernando.barcia@once.es">fernando.barcia@once.es</a></span><a href="https://github.com/FernandoBarcia/valijas-ONCE" target="_blank" rel="noopener noreferrer">Ver proyecto en GitHub</a></footer>
+  </div>
+  <input type="file" id="file-input" accept=".json,application/json" hidden>
+  <dialog id="center-dialog" aria-labelledby="dialog-title"><form id="center-form"><div class="dialog-heading"><h2 id="dialog-title">Editar centro</h2><button type="button" id="close-dialog" class="icon-button" aria-label="Cerrar">×</button></div><div class="form-grid" id="center-fields"></div><label class="checkbox"><input type="checkbox" name="activo">Centro activo</label><label class="checkbox"><input type="checkbox" name="validado">He revisado y validado el destinatario</label><p id="center-error" role="alert"></p><div class="toolbar"><button type="submit" class="primary">Guardar centro</button><button type="button" id="cancel-center" class="secondary">Cancelar</button></div></form></dialog>
+  <script id="initial-centers" type="application/json">/* CENTERS */</script>
+  <script>/* CORE */</script>
+  <script>/* APP */</script>
+</body>
+</html>

@@ -1,0 +1,746 @@
+[
+  {
+    "posicion": 1,
+    "campo": "Posición"
+  },
+  {
+    "posicion": 2,
+    "campo": "Año creación estructura y versión"
+  },
+  {
+    "posicion": 3,
+    "campo": "Código producto"
+  },
+  {
+    "posicion": 4,
+    "campo": "Tipo de Franqueo"
+  },
+  {
+    "posicion": 5,
+    "campo": "Código Etiquetador"
+  },
+  {
+    "posicion": 6,
+    "campo": "Número de contrato"
+  },
+  {
+    "posicion": 7,
+    "campo": "Número cliente"
+  },
+  {
+    "posicion": 8,
+    "campo": "Número de máquina de franquear"
+  },
+  {
+    "posicion": 9,
+    "campo": "Importe franqueado"
+  },
+  {
+    "posicion": 10,
+    "campo": "Código de Envío"
+  },
+  {
+    "posicion": 11,
+    "campo": "Nº de expedición"
+  },
+  {
+    "posicion": 12,
+    "campo": "Referencia de la expedición"
+  },
+  {
+    "posicion": 13,
+    "campo": "Autorización entregas parciales"
+  },
+  {
+    "posicion": 14,
+    "campo": "Total Bultos"
+  },
+  {
+    "posicion": 15,
+    "campo": "Numero de bulto"
+  },
+  {
+    "posicion": 16,
+    "campo": "Número manifiesto"
+  },
+  {
+    "posicion": 17,
+    "campo": "Código de Promoción"
+  },
+  {
+    "posicion": 18,
+    "campo": "Causa del Reenvío"
+  },
+  {
+    "posicion": 19,
+    "campo": "Nombre"
+  },
+  {
+    "posicion": 20,
+    "campo": "Apellido 1"
+  },
+  {
+    "posicion": 21,
+    "campo": "Apellido 2"
+  },
+  {
+    "posicion": 22,
+    "campo": "NIF"
+  },
+  {
+    "posicion": 23,
+    "campo": "Empresa"
+  },
+  {
+    "posicion": 24,
+    "campo": "Persona contacto"
+  },
+  {
+    "posicion": 25,
+    "campo": "Tipo dirección"
+  },
+  {
+    "posicion": 26,
+    "campo": "Dirección"
+  },
+  {
+    "posicion": 27,
+    "campo": "Direccion complemento"
+  },
+  {
+    "posicion": 28,
+    "campo": "Número"
+  },
+  {
+    "posicion": 29,
+    "campo": "Portal"
+  },
+  {
+    "posicion": 30,
+    "campo": "Bloque"
+  },
+  {
+    "posicion": 31,
+    "campo": "Escalera"
+  },
+  {
+    "posicion": 32,
+    "campo": "Piso"
+  },
+  {
+    "posicion": 33,
+    "campo": "Puerta"
+  },
+  {
+    "posicion": 34,
+    "campo": "Localidad"
+  },
+  {
+    "posicion": 35,
+    "campo": "Provincia"
+  },
+  {
+    "posicion": 36,
+    "campo": "CP"
+  },
+  {
+    "posicion": 37,
+    "campo": "ZIP"
+  },
+  {
+    "posicion": 38,
+    "campo": "País"
+  },
+  {
+    "posicion": 39,
+    "campo": "Oficina Elegida"
+  },
+  {
+    "posicion": 40,
+    "campo": "Destino apartado postal internacional"
+  },
+  {
+    "posicion": 41,
+    "campo": "Apartado Postal destino"
+  },
+  {
+    "posicion": 42,
+    "campo": "Teléfono contacto destinatario"
+  },
+  {
+    "posicion": 43,
+    "campo": "Email"
+  },
+  {
+    "posicion": 44,
+    "campo": "Código de HomePaq"
+  },
+  {
+    "posicion": 45,
+    "campo": "Tokenid Correospaq"
+  },
+  {
+    "posicion": 46,
+    "campo": "Referencia Cliente"
+  },
+  {
+    "posicion": 47,
+    "campo": "Referencia Cliente 2"
+  },
+  {
+    "posicion": 48,
+    "campo": "Referencia Cliente 3"
+  },
+  {
+    "posicion": 49,
+    "campo": "Modalidad de entrega"
+  },
+  {
+    "posicion": 50,
+    "campo": "Peso"
+  },
+  {
+    "posicion": 51,
+    "campo": "Largo"
+  },
+  {
+    "posicion": 52,
+    "campo": "Alto"
+  },
+  {
+    "posicion": 53,
+    "campo": "Ancho"
+  },
+  {
+    "posicion": 54,
+    "campo": "Seguro "
+  },
+  {
+    "posicion": 55,
+    "campo": "Importe Seguro"
+  },
+  {
+    "posicion": 56,
+    "campo": "Reembolso"
+  },
+  {
+    "posicion": 57,
+    "campo": "Importe Reembolso"
+  },
+  {
+    "posicion": 58,
+    "campo": "Tipo Reembolso"
+  },
+  {
+    "posicion": 59,
+    "campo": "IBAN Reembolso"
+  },
+  {
+    "posicion": 60,
+    "campo": "Seguro LI"
+  },
+  {
+    "posicion": 61,
+    "campo": "Importe Seguro LI"
+  },
+  {
+    "posicion": 62,
+    "campo": "Reembolso LI"
+  },
+  {
+    "posicion": 63,
+    "campo": "Importe Reembolso LI"
+  },
+  {
+    "posicion": 64,
+    "campo": "Tipo Reembolso LI"
+  },
+  {
+    "posicion": 65,
+    "campo": "Número de cuenta LI"
+  },
+  {
+    "posicion": 66,
+    "campo": "Entrega Exclusiva Destinatario"
+  },
+  {
+    "posicion": 67,
+    "campo": "Formato de Prueba entrega"
+  },
+  {
+    "posicion": 68,
+    "campo": "Referencia eAR"
+  },
+  {
+    "posicion": 69,
+    "campo": "Información del remitente para eAr"
+  },
+  {
+    "posicion": 70,
+    "campo": "Indicador entrega con recogida"
+  },
+  {
+    "posicion": 71,
+    "campo": "Descripción envío a recoger"
+  },
+  {
+    "posicion": 72,
+    "campo": "Imprimir etiqueta recogida"
+  },
+  {
+    "posicion": 73,
+    "campo": "Código del envío de ida asociado"
+  },
+  {
+    "posicion": 74,
+    "campo": "Generar envío de vuelta"
+  },
+  {
+    "posicion": 75,
+    "campo": "Código del envío de vuelta"
+  },
+  {
+    "posicion": 76,
+    "campo": "Fecha de caducidad del envío de vuelta"
+  },
+  {
+    "posicion": 77,
+    "campo": "Envío de vuelta permite embalaje"
+  },
+  {
+    "posicion": 78,
+    "campo": "Código etiquetador del envío de vuelta"
+  },
+  {
+    "posicion": 79,
+    "campo": "Número SMS destinatario"
+  },
+  {
+    "posicion": 80,
+    "campo": "Número SMS remitente"
+  },
+  {
+    "posicion": 81,
+    "campo": "Idioma SMS Remitente"
+  },
+  {
+    "posicion": 82,
+    "campo": "Idioma SMS Destinatario"
+  },
+  {
+    "posicion": 83,
+    "campo": "Recogida a domicilio"
+  },
+  {
+    "posicion": 84,
+    "campo": "Número de intentos de entrega"
+  },
+  {
+    "posicion": 85,
+    "campo": "Tiempo de permanencia en lista"
+  },
+  {
+    "posicion": 86,
+    "campo": "Entrega en Fecha determinada"
+  },
+  {
+    "posicion": 87,
+    "campo": "Entrega en franja horaria"
+  },
+  {
+    "posicion": 88,
+    "campo": "Embalaje Prepagado"
+  },
+  {
+    "posicion": 89,
+    "campo": "Código embalaje prepago"
+  },
+  {
+    "posicion": 90,
+    "campo": "Código punto de admisión"
+  },
+  {
+    "posicion": 91,
+    "campo": "Frase promocional"
+  },
+  {
+    "posicion": 92,
+    "campo": "Fecha de depósito prevista"
+  },
+  {
+    "posicion": 93,
+    "campo": "Observaciones 1"
+  },
+  {
+    "posicion": 94,
+    "campo": "Observaciones 2"
+  },
+  {
+    "posicion": 95,
+    "campo": "Instrucciones de devolucion en caso de no entrega para paquetes internacionales"
+  },
+  {
+    "posicion": 96,
+    "campo": "Documento escaneado 1  "
+  },
+  {
+    "posicion": 97,
+    "campo": "Acción documento 1"
+  },
+  {
+    "posicion": 98,
+    "campo": "Observaciones documento 1"
+  },
+  {
+    "posicion": 99,
+    "campo": "Documento escaneado 2"
+  },
+  {
+    "posicion": 100,
+    "campo": "Acción documento 2"
+  },
+  {
+    "posicion": 101,
+    "campo": "Observaciones documento 2"
+  },
+  {
+    "posicion": 102,
+    "campo": "Documento escaneado 3"
+  },
+  {
+    "posicion": 103,
+    "campo": "Accion documento 3"
+  },
+  {
+    "posicion": 104,
+    "campo": "Observaciones documento 3"
+  },
+  {
+    "posicion": 105,
+    "campo": "Horas de caducidad del envío de vuelta"
+  },
+  {
+    "posicion": 106,
+    "campo": "Entrega sin firma"
+  },
+  {
+    "posicion": 107,
+    "campo": "Tipo de modificación"
+  },
+  {
+    "posicion": 108,
+    "campo": "Tipo de Gestión"
+  },
+  {
+    "posicion": 109,
+    "campo": "Complejidad de gestión"
+  },
+  {
+    "posicion": 110,
+    "campo": "Autorización Previa a la Entrega"
+  },
+  {
+    "posicion": 111,
+    "campo": "Tipo de envío"
+  },
+  {
+    "posicion": 112,
+    "campo": "Envío comercial"
+  },
+  {
+    "posicion": 113,
+    "campo": "Factura superior a 500 euros"
+  },
+  {
+    "posicion": 114,
+    "campo": "DUA de exportación con Correos"
+  },
+  {
+    "posicion": 115,
+    "campo": "Cantidad-1"
+  },
+  {
+    "posicion": 116,
+    "campo": "Descripción de mercancía-1"
+  },
+  {
+    "posicion": 117,
+    "campo": "Peso neto-1"
+  },
+  {
+    "posicion": 118,
+    "campo": "Valor neto-1"
+  },
+  {
+    "posicion": 119,
+    "campo": "N Tarifario-1"
+  },
+  {
+    "posicion": 120,
+    "campo": "Descripción N Tarifario-1"
+  },
+  {
+    "posicion": 121,
+    "campo": "País de Origen-1"
+  },
+  {
+    "posicion": 122,
+    "campo": "Cantidad-2"
+  },
+  {
+    "posicion": 123,
+    "campo": "Descripción de mercancía-2"
+  },
+  {
+    "posicion": 124,
+    "campo": "Peso neto-2"
+  },
+  {
+    "posicion": 125,
+    "campo": "Valor neto-2"
+  },
+  {
+    "posicion": 126,
+    "campo": "N Tarifario-2"
+  },
+  {
+    "posicion": 127,
+    "campo": "Descripción N Tarifario-2"
+  },
+  {
+    "posicion": 128,
+    "campo": "País de Origen-2"
+  },
+  {
+    "posicion": 129,
+    "campo": "Cantidad-3"
+  },
+  {
+    "posicion": 130,
+    "campo": "Descripción de mercancía-3"
+  },
+  {
+    "posicion": 131,
+    "campo": "Peso neto-3"
+  },
+  {
+    "posicion": 132,
+    "campo": "Valor neto-3"
+  },
+  {
+    "posicion": 133,
+    "campo": "N Tarifario-3"
+  },
+  {
+    "posicion": 134,
+    "campo": "Descripción N Tarifario-3"
+  },
+  {
+    "posicion": 135,
+    "campo": "País de Origen-3"
+  },
+  {
+    "posicion": 136,
+    "campo": "Cantidad-4"
+  },
+  {
+    "posicion": 137,
+    "campo": "Descripción de mercancía-4"
+  },
+  {
+    "posicion": 138,
+    "campo": "Peso neto-4"
+  },
+  {
+    "posicion": 139,
+    "campo": "Valor neto-4"
+  },
+  {
+    "posicion": 140,
+    "campo": "N Tarifario-4"
+  },
+  {
+    "posicion": 141,
+    "campo": "Descripción N Tarifario-4"
+  },
+  {
+    "posicion": 142,
+    "campo": "País de Origen-4"
+  },
+  {
+    "posicion": 143,
+    "campo": "Cantidad-5"
+  },
+  {
+    "posicion": 144,
+    "campo": "Descripción de mercancía-5"
+  },
+  {
+    "posicion": 145,
+    "campo": "Peso neto-5"
+  },
+  {
+    "posicion": 146,
+    "campo": "Valor neto-5"
+  },
+  {
+    "posicion": 147,
+    "campo": "N Tarifario-5"
+  },
+  {
+    "posicion": 148,
+    "campo": "Descripción N Tarifario-5"
+  },
+  {
+    "posicion": 149,
+    "campo": "País de Origen-5"
+  },
+  {
+    "posicion": 150,
+    "campo": "Se adjunta factura"
+  },
+  {
+    "posicion": 151,
+    "campo": "Se adjunta licencia"
+  },
+  {
+    "posicion": 152,
+    "campo": "Se adjunta certificado"
+  },
+  {
+    "posicion": 153,
+    "campo": "Descripción factura adjunta"
+  },
+  {
+    "posicion": 154,
+    "campo": "Descripción licencia adjunta"
+  },
+  {
+    "posicion": 155,
+    "campo": "Descripción certificado adjunta"
+  },
+  {
+    "posicion": 156,
+    "campo": "Referencia aduanera del expedidor"
+  },
+  {
+    "posicion": 157,
+    "campo": "Referencia fiscal del importador"
+  },
+  {
+    "posicion": 158,
+    "campo": "Código del importador"
+  },
+  {
+    "posicion": 159,
+    "campo": "Número de IVA del importador"
+  },
+  {
+    "posicion": 160,
+    "campo": "Teléfono del importador"
+  },
+  {
+    "posicion": 161,
+    "campo": "Email del importador"
+  },
+  {
+    "posicion": 162,
+    "campo": "Contiene mercancías peligrosas"
+  },
+  {
+    "posicion": 163,
+    "campo": "Nombre"
+  },
+  {
+    "posicion": 164,
+    "campo": "Apellido 1"
+  },
+  {
+    "posicion": 165,
+    "campo": "Apellido 2"
+  },
+  {
+    "posicion": 166,
+    "campo": "Nif"
+  },
+  {
+    "posicion": 167,
+    "campo": "Empresa"
+  },
+  {
+    "posicion": 168,
+    "campo": "Persona contacto"
+  },
+  {
+    "posicion": 169,
+    "campo": "Tipo dirección"
+  },
+  {
+    "posicion": 170,
+    "campo": "Dirección"
+  },
+  {
+    "posicion": 171,
+    "campo": "Número"
+  },
+  {
+    "posicion": 172,
+    "campo": "Portal"
+  },
+  {
+    "posicion": 173,
+    "campo": "Bloque"
+  },
+  {
+    "posicion": 174,
+    "campo": "Escalera"
+  },
+  {
+    "posicion": 175,
+    "campo": "Piso"
+  },
+  {
+    "posicion": 176,
+    "campo": "Puerta"
+  },
+  {
+    "posicion": 177,
+    "campo": "Localidad"
+  },
+  {
+    "posicion": 178,
+    "campo": "Provincia"
+  },
+  {
+    "posicion": 179,
+    "campo": "CP"
+  },
+  {
+    "posicion": 180,
+    "campo": "ZIP"
+  },
+  {
+    "posicion": 181,
+    "campo": "Pais"
+  },
+  {
+    "posicion": 182,
+    "campo": "Teléfono contacto remitente"
+  },
+  {
+    "posicion": 183,
+    "campo": "Email"
+  },
+  {
+    "posicion": 184,
+    "campo": "Numero Apartado reembolso"
+  },
+  {
+    "posicion": 185,
+    "campo": "Codired pago giro por reembolso lista"
+  },
+  {
+    "posicion": 186,
+    "campo": "Fin De registro"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "codigo": "EJEMPLO-001",
+    "nombreCentro": "CENTRO DE EJEMPLO",
+    "nombre": "ANA",
+    "apellido1": "EJEMPLO",
+    "apellido2": "PRUEBA",
+    "tipoVia": "C",
+    "via": "EJEMPLO",
+    "numero": "1",
+    "complemento": "",
+    "cp": "28001",
+    "localidad": "MADRID",
+    "provincia": "MADRID",
+    "email": "destinatario@example.com",
+    "telefono": "",
+    "activo": true,
+    "validado": true
+  }
+]
