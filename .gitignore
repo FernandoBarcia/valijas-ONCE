@@ -1,0 +1,15 @@
+# Agenda y exportaciones de trabajo
+data/centros.json
+*COPIA*.json
+*CORREOS*.txt
+*.zip
+*.xlsx
+*.xls
+*.png
+*.jpg
+*.jpeg
+Valijas*.html
+node_modules/
+.DS_Store
+.env
+.env.*

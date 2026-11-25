@@ -1,0 +1,15 @@
+{
+  "name": "valijas-once-local",
+  "version": "1.0.5",
+  "private": true,
+  "description": "Herramienta para facilitar el envío de valijas",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "author": "Fernando Barcia <fernando.barcia@once.es>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FernandoBarcia/valijas-ONCE.git"
+  }
+}
