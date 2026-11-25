@@ -2,7 +2,7 @@
 
 Herramienta para facilitar el envío de valijas: selecciona centros, indica los bultos y genera el archivo TXT para importarlo en Correos.
 
-Creado por **Fernando Barcia** · fernando.barcia@once.es
+Contacto · fernando.barcia@once.es
 
 ## Puesta en marcha
 
