@@ -190,11 +190,14 @@
     }).join('');
   }
   function editCenter(id) {
-    editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:C.nextCode(state.centros),nombreCentro:'',activo:true,validado:false};
+    editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:C.nextCode(state.centros),nombreCentro:'',tipoVia:'C',activo:true,validado:false};
+    // Tipo de vía: solo los códigos de Correos. Un valor antiguo no admitido obliga a elegir uno.
+    const tipoValido=Object.hasOwn(C.TIPOS_VIA,c.tipoVia||'');
+    const tipoVia=`<label>Tipo de vía<select name="tipoVia">${tipoValido?'':`<option value="" selected>${c.tipoVia?escape(c.tipoVia)+' · no admitido, elige otro':'Elige un tipo'}</option>`}${Object.entries(C.TIPOS_VIA).map(([k,v])=>`<option value="${k}" ${k===c.tipoVia?'selected':''}>${escape(v)} (${k})</option>`).join('')}</select></label>`;
     $('dialog-title').textContent=id?'Editar centro':'Añadir centro';
     $('delete-center').hidden=!id;
     // El código interno es automático: se muestra, pero no se escribe.
-    $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>k==='codigo'
+    $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>k==='tipoVia'?tipoVia:k==='codigo'
       ?`<label>${escape(label)}<input name="codigo" value="${escape(c.codigo)}" readonly aria-describedby="codigo-help"><small id="codigo-help">Se asigna automáticamente.</small></label>`
       :`<label>${escape(label)}${k==='nombreCentro'?' *':''}<input name="${k}" maxlength="${max}" value="${escape(c[k]||'')}" ${k==='nombreCentro'?'required':''} ${k==='cp'?'inputmode="numeric"':''}></label>`).join('');
     $('center-form').elements.activo.checked=c.activo;$('center-form').elements.validado.checked=c.validado;

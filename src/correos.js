@@ -19,6 +19,10 @@
     tipoVia:['Tipo de vía',3],via:['Vía',100],numero:['Número',5],complemento:['Complemento',100],
     cp:['Código postal',5],localidad:['Localidad',100],provincia:['Provincia',40],
     email:['Correo electrónico',50],telefono:['Teléfono',15]});
+  // Tipos de dirección admitidos por Correos (plantilla de importación, campo 25).
+  const TIPOS_VIA = Object.freeze({C:'Calle',AV:'Avenida',PLA:'Plaza',VIA:'Vía',ALA:'Alameda',AUP:'Autopista',
+    AUV:'Autovía',BUL:'Bulevar',CAM:'Camino',CAR:'Carretera',GLO:'Glorieta',PAS:'Paseo',PAJ:'Pasaje',
+    RON:'Ronda',SEC:'Sector',TRA:'Travesía',OTR:'Otros'});
   const REQUIRED = ['codigo','nombreCentro','nombre','apellido1','apellido2','tipoVia','via','numero','cp','localidad','provincia'];
   const CTRL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
   function fail(message) { throw new Error(message); }
@@ -48,6 +52,7 @@
     if (forShipment) {
       if (c.activo!==true) errors.push('Centro inactivo.');
       if (c.validado!==true) errors.push('Destinatario pendiente de validar.');
+      if (c.tipoVia && !Object.hasOwn(TIPOS_VIA,c.tipoVia)) errors.push(`Tipo de vía no admitido por Correos: ${c.tipoVia}. Elige uno de la lista.`);
       if (/^(35|38|51|52)/.test(c.cp)) errors.push('Esta versión no admite destinos que requieren información aduanera.');
     }
     return errors;
@@ -244,7 +249,7 @@
     for (const [k,v] of Object.entries(validateCounters(b))) result[k]=Math.max(result[k]||1,v);
     return result;
   }
-  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,nextCode,validateConfig,dateKey,
+  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,nextCode,TIPOS_VIA,validateConfig,dateKey,
     normalizeName,encode,validateRecords,validateTXT,generate,validateCounters,mergeCounters,
     quantityFrom,cleanDraft,reviewGroups};
 });

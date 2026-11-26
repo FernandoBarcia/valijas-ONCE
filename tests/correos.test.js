@@ -83,3 +83,9 @@ test('centros importados sin código reciben uno automático y único',()=>{
   const list=C.validateCenters([{...base,codigo:'CENTRO-004'},{...base,codigo:''},{...base,codigo:undefined}]);
   assert.deepEqual(list.map(c=>c.codigo),['CENTRO-004','CENTRO-005','CENTRO-006']);
 });
+test('tipo de vía: solo los códigos de Correos',()=>{
+  for(const t of ['C','AV','PLA','TRA','OTR'])assert.doesNotThrow(()=>run(1,{tipoVia:t}));
+  for(const t of ['CL','PZ','c','XYZ'])assert.throws(()=>run(1,{tipoVia:t}),/Tipo de vía/);
+  assert.doesNotThrow(()=>C.validateCenters([{...base,tipoVia:'CL'}]),'una agenda antigua se importa y queda pendiente de revisión');
+  assert.ok(C.centerErrors({...base,tipoVia:'CL'}).some(e=>e.includes('Tipo de vía')));
+});

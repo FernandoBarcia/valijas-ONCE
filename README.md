@@ -21,7 +21,7 @@ Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguien
 
 - Cantidades por centro y resumen del envío.
 - Revisión opcional antes de generar: destinos, bultos y referencias tal como irán en el TXT, sin gastar referencias.
-- Alta, edición, eliminación e importación de centros. El código interno se asigna automáticamente (`CENTRO-001`, `CENTRO-002`…), también a los centros importados sin código.
+- Alta, edición, eliminación e importación de centros. El código interno se asigna automáticamente (`CENTRO-001`, `CENTRO-002`…), también a los centros importados sin código. El tipo de vía se elige entre los códigos de Correos (C, AV, PLA, VIA, ALA, AUP, AUV, BUL, CAM, CAR, GLO, PAS, PAJ, RON, SEC, TRA, OTR).
 - Un registro independiente por bulto, con 186 campos, tabuladores y CRLF.
 - Referencias correlativas, configuración del producto y características.
 - Validación de datos y correos sin tildes.
