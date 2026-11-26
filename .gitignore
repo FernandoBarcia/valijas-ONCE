@@ -6,6 +6,8 @@ data/centros.json
 *.xlsx
 *.xls
 *.png
+!/assets/icon-32.png
+!/assets/apple-touch-icon.png
 *.jpg
 *.jpeg
 Valijas*.html
