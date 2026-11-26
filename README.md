@@ -1,55 +1,52 @@
 # Valijas ONCE
 
-Herramienta para facilitar el envío de valijas: selecciona centros, indica los bultos y genera el archivo TXT para importarlo en Correos.
+Valijas ONCE prepara el archivo TXT que se importa en Correos para enviar valijas. Selecciona los centros destinatarios, indica cuántos bultos va a recibir cada uno y revisa el envío antes de descargar el fichero.
 
-Contacto · fernando.barcia@once.es
+**[Descargar Valijas-ONCE.html](https://github.com/FernandoBarcia/valijas-ONCE/releases/latest/download/Valijas-ONCE.html)**
 
-## Descargar y usar
+Abre el archivo descargado en Safari o Chrome. La herramienta funciona sin instalación y sin conexión. Solo necesitas acceder a Correos para importar el TXT.
 
-Descarga `Valijas-ONCE.html` desde [Releases](https://github.com/FernandoBarcia/valijas-ONCE/releases/latest) y ábrelo en Safari o Chrome. Funciona sin instalación y sin conexión.
+## Preparar la agenda
 
-## Construir desde el código fuente
+Puedes introducir los centros que usas habitualmente en **Centros → Añadir centro**. Si ya tienes una agenda en JSON, ve a **Centros → Importar centros JSON**. La vista previa indica qué centros se añadirán y qué campos se actualizarán.
 
-Requiere Node.js 22 o superior solo para desarrollar y construir el HTML. No hay dependencias que instalar.
+- **Añadir y actualizar** combina las agendas por código interno. Los registros sin código se añaden como centros nuevos.
+- **Sustituir toda la agenda** carga el contenido del archivo y vacía las cantidades del envío en curso. Úsalo al importar la agenda de trabajo por primera vez para quitar el centro de ejemplo.
+
+Marca con la estrella los centros habituales para tenerlos a mano en la pantalla de envío. El buscador recorre toda la agenda. Si un centro queda pendiente de revisión, su ficha indica los campos que debes corregir antes de usarlo.
+
+## Preparar un envío
+
+1. Abre **Envío de valijas** e indica los bultos de cada centro destinatario.
+2. Pulsa **Revisar antes de generar** para comprobar las direcciones, las cantidades y las referencias. La revisión no reserva referencias.
+3. Pulsa **Generar TXT Correos** y carga el archivo desde **Importar fichero** en Correos.
+
+Cada TXT admite hasta **150 bultos**, con un registro por bulto. La herramienta prepara envíos nacionales a domicilio con **Paq Premium** o **Paq Estándar**, con el mismo peso y medidas para todos los bultos de la remesa. Para **Canarias, Ceuta y Melilla**, genera la declaración aduanera como **Documentos**.
+
+## Copias de seguridad y actualizaciones
+
+La agenda se guarda en el navegador con el que abres el HTML. En **Configuración → Copia de seguridad** puedes descargar un JSON que incluye centros y favoritos, configuración, cantidades en curso y contadores de referencias.
+
+Antes de actualizar, guarda una copia completa. Sustituye el HTML conservando su nombre y carpeta, y vuelve a abrirlo con el mismo navegador y perfil. Si necesitas recuperar los datos o cambiar de ordenador, usa **Restaurar copia**.
+
+El HTML de GitHub incluye un centro ficticio. Para compartir la herramienta con un compañero, envíale el HTML y comparte la agenda de trabajo por separado en un canal interno con acceso restringido.
+
+## Compilar y mantener el proyecto
+
+Con Node.js 22 o superior, ejecuta desde la raíz del repositorio:
 
 ```sh
 npm test
 npm run build
 ```
 
-Abre `Valijas ONCE.html`, que produce el build, en Safari o Chrome. La aplicación funciona sin servidor. El repositorio contiene únicamente centros ficticios. El código etiquetador por defecto es `9KAQ`; se puede cambiar en Configuración.
+El build crea `Valijas-ONCE.html` en la raíz. No hay dependencias que instalar. Para una compilación de uso interno se puede incluir `data/centros.json`, siguiendo el [ejemplo de agenda](data/centros.example.json). Ese archivo está excluido de Git. Mantén también fuera del repositorio las copias de seguridad, los TXT de trabajo y cualquier HTML compilado con una agenda real.
 
-Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguiendo `data/centros.example.json` y reconstruye. Ese archivo está excluido de Git.
+- [Generador y validación del TXT](src/correos.js)
+- [Interfaz y almacenamiento local](src/app.js)
+- [Pruebas del formato y la agenda](tests/correos.test.js)
+- [Guía de Correos para el formato 2018v002](docs/guia-correos-formato-2018v002.pdf)
 
-## Funciones
+Para publicar una nueva versión, actualiza el número en `package.json` y `src/correos.js`. GitHub Actions ejecuta las pruebas y el build en `main` antes de publicar el HTML en [Releases](https://github.com/FernandoBarcia/valijas-ONCE/releases).
 
-- Cantidades por centro y resumen del envío. La pantalla inicial muestra solo los centros favoritos (o todos, si no hay ninguno marcado); la búsqueda recorre toda la agenda.
-- Búsqueda en Centros por nombre, localidad, provincia, dirección o destinatario.
-- Revisión opcional antes de generar: destinos, bultos y referencias tal como irán en el TXT, sin gastar referencias.
-- Alta, edición, eliminación e importación de centros con vista previa. Puedes añadir y actualizar por código interno o sustituir la agenda completa. El código interno se asigna automáticamente (`CENTRO-001`, `CENTRO-002`…), también a los centros importados sin código. El tipo de vía se elige entre los códigos de Correos (C, AV, PLA, VIA, ALA, AUP, AUV, BUL, CAM, CAR, GLO, PAS, PAJ, RON, SEC, TRA, OTR).
-- Un registro independiente por bulto, con 186 campos, tabuladores y CRLF.
-- Referencias correlativas, configuración del producto y características.
-- Validación de caracteres de destinatario y correos sin tildes. La edición y la importación rechazan caracteres incompatibles. Los centros guardados previamente con esos caracteres se conservan, pero quedan pendientes de revisión y se excluyen de la selección hasta corregirlos.
-- Copias de seguridad y recuperación del último TXT de la sesión.
-
-La versión de trabajo ha sido utilizada con éxito en la web de Correos. La agenda incluida aquí es ficticia y no debe utilizarse para envíos reales.
-
-## Organización
-
-`src/correos.js` contiene el generador y las validaciones; `src/app.js`, la interfaz y persistencia; `src/index.html` y `src/styles.css`, la presentación. Los iconos están en `assets/` y se incrustan en el HTML. `build.js` empaqueta la aplicación en un HTML y comprueba la coincidencia de versiones. Las pruebas utilizan `node:test` sin dependencias.
-
-La versión figura en `package.json` y `src/correos.js`; deben actualizarse juntas. Para actualizar, guarda una copia completa y sustituye `Valijas ONCE.html` en la misma carpeta. Usa el mismo navegador y perfil. Si al abrirlo faltan tu agenda o tus contadores, restaura la copia completa.
-
-## Datos de trabajo
-
-No añadas a Git la agenda real, copias de seguridad, TXT de envíos, hojas de cálculo ni capturas con destinatarios. El HTML generado también incluye la agenda y está excluido. La copia de trabajo con los centros reales se mantiene fuera de este repositorio.
-
-## Alcance
-
-Formato 2018v002, Paq Premium o Paq Estándar a domicilio, España, sin servicios adicionales. Los envíos a Canarias, Ceuta y Melilla (CP 35, 38, 51 y 52) se declaran automáticamente como Documentos (campo 111 = 1). Hasta 150 bultos por archivo. Peso y medidas comunes por envío. La identificación del remitente procede de la cuenta de Correos. Las validaciones internas requieren nombre y dos apellidos.
-
-Consulta la [guía del formato de Correos](docs/guia-correos-formato-2018v002.pdf) (copia del [original de Correos](https://epostal.correos.es/OV2PREENVWEB/plantillas/GuiadeAyuda.pdf), junio de 2019).
-
-## Repositorio
-
-[Ver proyecto en GitHub](https://github.com/FernandoBarcia/valijas-ONCE). El enlace también aparece en el pie de la aplicación.
+Contacto · [Fernando Barcia](mailto:fernando.barcia@once.es)
