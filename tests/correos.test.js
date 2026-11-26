@@ -89,3 +89,7 @@ test('tipo de vía: solo los códigos de Correos',()=>{
   assert.doesNotThrow(()=>C.validateCenters([{...base,tipoVia:'CL'}]),'una agenda antigua se importa y queda pendiente de revisión');
   assert.ok(C.centerErrors({...base,tipoVia:'CL'}).some(e=>e.includes('Tipo de vía')));
 });
+test('favorito: se conserva al validar y por defecto es false',()=>{
+  const [a,b]=C.validateCenters([{...base,favorito:true},{...base,codigo:'TEST-2'}]);
+  assert.equal(a.favorito,true);assert.equal(b.favorito,false);
+});

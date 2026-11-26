@@ -69,15 +69,24 @@
   // Un centro bloqueado no se puede editar en la tabla: nunca cuenta ni se envía.
   const quantity=c=>C.centerErrors(c).length?0:(state.draft[c.codigo]??0);
   const shortName=c=>c.localidad==='A CORUÑA'?'A Coruña':c.localidad.toLocaleLowerCase('es').replace(/(^|\s)\S/g,x=>x.toLocaleUpperCase('es'));
+  // Pantalla inicial: solo favoritos (y los que ya llevan bultos). Sin favoritos, todos.
+  // Al buscar se busca en toda la agenda.
+  const favoritos=()=>state.centros.filter(c=>c.favorito).length;
+  const matches=(c,q,fields)=>fields.map(k=>c[k]||'').join(' ').toLocaleLowerCase('es').includes(q);
+  function visibleRows() {
+    const q=$('search').value.trim().toLocaleLowerCase('es');
+    if(q) return state.centros.filter(c=>matches(c,q,['nombreCentro','localidad','provincia']));
+    return favoritos()?state.centros.filter(c=>c.favorito||quantity(c)!==0):state.centros;
+  }
   function renderRows() {
-    const q=$('search').value.toLocaleLowerCase('es');
-    const centers=state.centros.filter(c=>(c.nombreCentro+' '+c.localidad).toLocaleLowerCase('es').includes(q));
+    const q=$('search').value.trim(), centers=visibleRows();
     $('destinations').innerHTML=centers.map(c=>{
       const errors=C.centerErrors(c), blocked=errors.length>0;
       return `<tr data-center="${escape(c.codigo)}" class="${quantity(c)>0?'selected':''}"><td><span class="destination-title">${escape(c.nombreCentro)}</span><span class="destination-meta">${escape(c.via)} ${escape(c.numero)} · ${escape(c.cp)} ${escape(c.localidad)}</span>${blocked?`<span class="destination-warning">${escape(errors[0])} Revisa este centro en la agenda.</span>`:''}</td><td><input class="qty" type="number" min="0" max="150" step="1" value="${escape(quantity(c))}" aria-label="Bultos para ${escape(c.nombreCentro)}" ${blocked?'disabled':''}></td><td><button class="remove" aria-label="Quitar ${escape(c.nombreCentro)} del envío" ${blocked?'disabled':''}>×</button></td></tr>`;
     }).join('')||'<tr><td colspan="3">No hay centros que coincidan con la búsqueda.</td></tr>';
     const available=state.centros.filter(c=>C.centerErrors(c).length===0).length;
-    $('available').textContent=`${available} centros disponibles · ${state.centros.length-available} pendientes o inactivos · Máximo 150 paquetes por archivo`;
+    const scope=q?`${centers.length} resultados en toda la agenda`:favoritos()?`Mostrando favoritos (${centers.length} de ${state.centros.length} centros) · Busca para ver el resto`:'Mostrando todos los centros · Marca favoritos en Centros para ver aquí solo esos';
+    $('available').textContent=`${scope} · ${available} disponibles · Máximo 150 paquetes por archivo`;
     $('center-count').textContent=state.centros.length;
     renderSummary();
   }
@@ -165,7 +174,8 @@
     const button=event.target.closest('.remove');if(!button)return;
     state.draft[button.closest('tr').dataset.center]=0;edited();persist();renderRows();
   });
-  $('one-each').onclick=()=>{state.draft=Object.fromEntries(state.centros.map(c=>[c.codigo,C.centerErrors(c).length?0:1]));edited();persist();renderRows();};
+  // Pone 1 bulto a cada centro de la lista visible; los demás quedan como estaban.
+  $('one-each').onclick=()=>{for(const c of visibleRows())state.draft[c.codigo]=C.centerErrors(c).length?0:1;edited();persist();renderRows();};
   $('new').onclick=()=>{
     if(Object.values(state.draft).some(n=>n!==0)&&!confirm('¿Vaciar las cantidades para preparar un nuevo envío? Los contadores se conservan.'))return;
     state.draft={};persist();renderRows();refreshCounter();message('Nuevo envío preparado.');
@@ -184,13 +194,17 @@
     }catch(e){message(e.message,true,'settings');}
   };
   function renderCenters() {
-    $('center-cards').innerHTML=state.centros.map(c=>{
+    const q=$('center-search').value.trim().toLocaleLowerCase('es');
+    const list=state.centros.filter(c=>!q||matches(c,q,['nombreCentro','localidad','provincia','cp','via','nombre','apellido1','apellido2','codigo']));
+    $('center-results').textContent=q?`${list.length} de ${state.centros.length} centros`:`${state.centros.length} centros · ${favoritos()} favoritos en la pantalla inicial`;
+    $('center-cards').innerHTML=list.map(c=>{
       const errors=C.centerErrors(c);
-      return `<article class="card center-card"><span class="badge ${errors.length?'pending':''}">${errors.length?'Pendiente de revisión':'Disponible'}</span><h2>${escape(c.nombreCentro)}</h2><p>${escape([c.nombre,c.apellido1,c.apellido2].filter(Boolean).join(' '))}<br>${escape(c.tipoVia+' '+c.via+' '+c.numero)}<br>${escape(c.cp+' '+c.localidad)}</p>${errors.length?`<p class="destination-warning">${errors.map(escape).join('<br>')}</p>`:''}<button class="secondary" data-edit="${escape(c.codigo)}">Editar centro</button></article>`;
-    }).join('');
+      return `<article class="card center-card"><div class="card-top"><span class="badge ${errors.length?'pending':''}">${errors.length?'Pendiente de revisión':'Disponible'}</span><button class="fav ${c.favorito?'on':''}" data-fav="${escape(c.codigo)}" aria-pressed="${c.favorito}" title="Mostrar en la pantalla inicial">${c.favorito?'★ Favorito':'☆ Favorito'}</button></div><h2>${escape(c.nombreCentro)}</h2><p>${escape([c.nombre,c.apellido1,c.apellido2].filter(Boolean).join(' '))}<br>${escape(c.tipoVia+' '+c.via+' '+c.numero)}<br>${escape(c.cp+' '+c.localidad)}</p>${errors.length?`<p class="destination-warning">${errors.map(escape).join('<br>')}</p>`:''}<button class="secondary" data-edit="${escape(c.codigo)}">Editar centro</button></article>`;
+    }).join('')||'<p>No hay centros que coincidan con la búsqueda.</p>';
   }
+  $('center-search').oninput=renderCenters;
   function editCenter(id) {
-    editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:C.nextCode(state.centros),nombreCentro:'',tipoVia:'C',activo:true,validado:false};
+    editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:C.nextCode(state.centros),nombreCentro:'',tipoVia:'C',activo:true,validado:false,favorito:true};
     // Tipo de vía: solo los códigos de Correos. Un valor antiguo no admitido obliga a elegir uno.
     const tipoValido=Object.hasOwn(C.TIPOS_VIA,c.tipoVia||'');
     const tipoVia=`<label>Tipo de vía<select name="tipoVia">${tipoValido?'':`<option value="" selected>${c.tipoVia?escape(c.tipoVia)+' · no admitido, elige otro':'Elige un tipo'}</option>`}${Object.entries(C.TIPOS_VIA).map(([k,v])=>`<option value="${k}" ${k===c.tipoVia?'selected':''}>${escape(v)} (${k})</option>`).join('')}</select></label>`;
@@ -200,7 +214,7 @@
     $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>k==='tipoVia'?tipoVia:k==='codigo'
       ?`<label>${escape(label)}<input name="codigo" value="${escape(c.codigo)}" readonly aria-describedby="codigo-help"><small id="codigo-help">Se asigna automáticamente.</small></label>`
       :`<label>${escape(label)}${k==='nombreCentro'?' *':''}<input name="${k}" maxlength="${max}" value="${escape(c[k]||'')}" ${k==='nombreCentro'?'required':''} ${k==='cp'?'inputmode="numeric"':''}></label>`).join('');
-    $('center-form').elements.activo.checked=c.activo;$('center-form').elements.validado.checked=c.validado;
+    $('center-form').elements.activo.checked=c.activo;$('center-form').elements.validado.checked=c.validado;$('center-form').elements.favorito.checked=c.favorito===true;
     const emailInput=$('center-form').elements.email;
     emailInput.type='email';emailInput.autocapitalize='none';emailInput.spellcheck=false;
     emailInput.setAttribute('autocorrect','off');
@@ -214,7 +228,11 @@
     };
     $('center-error').textContent='';$('center-dialog').showModal();
   }
-  $('center-cards').onclick=e=>{const b=e.target.closest('[data-edit]');if(b)editCenter(b.dataset.edit);};
+  $('center-cards').onclick=e=>{
+    const fav=e.target.closest('[data-fav]');
+    if(fav){state.centros=state.centros.map(c=>c.codigo===fav.dataset.fav?{...c,favorito:!c.favorito}:c);persist();renderCenters();renderRows();return;}
+    const b=e.target.closest('[data-edit]');if(b)editCenter(b.dataset.edit);
+  };
   $('add-center').onclick=()=>editCenter(null);
   $('close-dialog').onclick=$('cancel-center').onclick=()=>$('center-dialog').close();
   // Eliminar: quita el centro de la agenda y del envío en curso. Los contadores de referencias no cambian.
@@ -230,7 +248,7 @@
     try {
       const c=Object.fromEntries(new FormData(e.target));
       for(const k of Object.keys(C.CENTER_FIELDS))c[k]=c[k].trim();
-      c.activo=e.target.elements.activo.checked;c.validado=e.target.elements.validado.checked;
+      c.activo=e.target.elements.activo.checked;c.validado=e.target.elements.validado.checked;c.favorito=e.target.elements.favorito.checked;
       const errors=C.centerErrors(c,false);if(errors.length)throw Error(errors.join('\n'));
       if(c.validado){const errors=C.centerErrors({...c,activo:true});if(errors.length)throw Error('No se puede marcar como validado:\n'+errors.join('\n'));}
       const list=editing?state.centros.map(old=>old.codigo===editing?c:old):[...state.centros,c];

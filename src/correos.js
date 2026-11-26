@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.2.0';
+  const VERSION = '1.3.0';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -75,7 +75,7 @@
       for (const key of Object.keys(CENTER_FIELDS)) c[key]=input?.[key] ?? '';
       // Centros importados sin código: se les asigna uno automáticamente.
       if (c.codigo==='') { c.codigo=nextCode(list,assigned); assigned.add(c.codigo); }
-      c.activo=input?.activo; c.validado=input?.validado;
+      c.activo=input?.activo; c.validado=input?.validado; c.favorito=input?.favorito===true;
       const errors=centerErrors(c,false);
       if (errors.length) fail(`Centro ${i+1}: ${errors.join(' ')}`);
       if (ids.has(c.codigo)) fail(`Código de centro duplicado: ${c.codigo}.`);
