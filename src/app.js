@@ -182,8 +182,6 @@
     const row=[...$('destinations').rows].find(row=>row.dataset.center===code);
     (row?.querySelector('.qty')||$('search')).focus();
   });
-  // Pone 1 bulto a cada centro de la lista visible; los demás quedan como estaban.
-  $('one-each').onclick=()=>{for(const c of visibleRows())state.draft[c.codigo]=C.centerErrors(c).length?0:1;edited();persist();renderRows();};
   $('new').onclick=()=>{
     if(Object.values(state.draft).some(n=>n!==0)&&!confirm('¿Vaciar las cantidades para preparar un nuevo envío? Los contadores se conservan.'))return;
     state.draft={};persist();renderRows();refreshCounter();message('Nuevo envío preparado.');

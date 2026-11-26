@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.4.7';
+  const VERSION = '1.4.8';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
