@@ -32,7 +32,7 @@ La versión de trabajo ha sido utilizada con éxito en la web de Correos. La age
 
 ## Organización
 
-`src/correos.js` contiene el generador y las validaciones; `src/app.js`, la interfaz y persistencia; `src/index.html` y `src/styles.css`, la presentación. `build.js` empaqueta la aplicación en un HTML y comprueba la coincidencia de versiones. Las pruebas utilizan `node:test` sin dependencias.
+`src/correos.js` contiene el generador y las validaciones; `src/app.js`, la interfaz y persistencia; `src/index.html` y `src/styles.css`, la presentación. Los iconos están en `assets/` y se incrustan en el HTML. `build.js` empaqueta la aplicación en un HTML y comprueba la coincidencia de versiones. Las pruebas utilizan `node:test` sin dependencias.
 
 La versión figura en `package.json` y `src/correos.js`; deben actualizarse juntas. Al abrir una versión con otro nombre de archivo, restaura una copia completa para conservar tus datos y contadores si el navegador utiliza almacenamiento separado.
 
