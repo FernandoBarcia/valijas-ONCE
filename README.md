@@ -29,7 +29,7 @@ Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguien
 - Alta, edición, eliminación e importación de centros con vista previa. Puedes añadir y actualizar por código interno o sustituir la agenda completa. El código interno se asigna automáticamente (`CENTRO-001`, `CENTRO-002`…), también a los centros importados sin código. El tipo de vía se elige entre los códigos de Correos (C, AV, PLA, VIA, ALA, AUP, AUV, BUL, CAM, CAR, GLO, PAS, PAJ, RON, SEC, TRA, OTR).
 - Un registro independiente por bulto, con 186 campos, tabuladores y CRLF.
 - Referencias correlativas, configuración del producto y características.
-- Validación de datos y correos sin tildes.
+- Validación de caracteres de destinatario y correos sin tildes. La edición y la importación rechazan caracteres incompatibles. Los centros guardados previamente con esos caracteres se conservan, pero quedan pendientes de revisión y se excluyen de la selección hasta corregirlos.
 - Copias de seguridad y recuperación del último TXT de la sesión.
 
 La versión de trabajo ha sido utilizada con éxito en la web de Correos. La agenda incluida aquí es ficticia y no debe utilizarse para envíos reales.

@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.4.8';
+  const VERSION = '1.4.9';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -38,11 +38,27 @@
     if ([...value].length > max) fail(`${label}: máximo ${max} caracteres.`);
     return value;
   }
-  function centerErrors(c, forShipment=true) {
+  const RECIPIENT_TEXT = new Set(['nombreCentro','nombre','apellido1','apellido2','via','numero','complemento','localidad','provincia']);
+  // Signos indicados por el importador para Empresa, más el guion de complemento observado en envíos aceptados.
+  const RECIPIENT_SIGNS = new Set(" .·-()'!¡¿?~,:;&/@_ª$€º+*=");
+  function checkRecipientCharacters(key,value,label) {
+    if (!RECIPIENT_TEXT.has(key)) return;
+    const invalid=[...new Set([...value].filter(ch=>
+      !/^[\p{L}0-9]$/u.test(ch) && !RECIPIENT_SIGNS.has(ch) && !(key==='complemento' && ch==='–')
+    ))];
+    if (invalid.length) {
+      const chars=invalid.map(ch=>`«${ch}» (U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')})`).join(', ');
+      fail(`${label}: caracteres no admitidos por Correos: ${chars}.${invalid.includes('´')?" Si querías escribir un apóstrofo, usa el recto (').":''}`);
+    }
+  }
+  function centerErrors(c, forShipment=true, allowLegacyCharacters=false) {
     const errors=[];
     if (!c || typeof c !== 'object' || Array.isArray(c)) return ['Centro no válido.'];
     for (const [key,[label,max]] of Object.entries(CENTER_FIELDS)) {
-      try { text(c[key],label,max,forShipment ? REQUIRED.includes(key) : ['codigo','nombreCentro'].includes(key)); }
+      try {
+        text(c[key],label,max,forShipment ? REQUIRED.includes(key) : ['codigo','nombreCentro'].includes(key));
+        if (!allowLegacyCharacters) checkRecipientCharacters(key,c[key],label);
+      }
       catch(e) { errors.push(e.message); }
     }
     if (typeof c.activo!=='boolean' || typeof c.validado!=='boolean') errors.push('Activo y validado deben ser valores booleanos.');
@@ -70,7 +86,7 @@
     }
     return CODE_PREFIX+String(max+1).padStart(3,'0');
   }
-  function validateCenters(list, existing=[]) {
+  function validateCenters(list, {existing=[],allowLegacyCharacters=false}={}) {
     if (!Array.isArray(list) || !list.length || list.length>500) fail('El archivo debe contener entre 1 y 500 centros.');
     const ids=new Set(), assigned=new Set(existing.map(c=>c.codigo));
     return list.map((input,i)=>{
@@ -79,7 +95,7 @@
       // Centros importados sin código: se les asigna uno automáticamente.
       if (c.codigo==='') { c.codigo=nextCode(list,assigned); assigned.add(c.codigo); }
       c.activo=input?.activo; c.validado=input?.validado; c.favorito=input?.favorito===true;
-      const errors=centerErrors(c,false);
+      const errors=centerErrors(c,false,allowLegacyCharacters);
       if (errors.length) fail(`Centro ${i+1}: ${errors.join(' ')}`);
       if (ids.has(c.codigo)) fail(`Código de centro duplicado: ${c.codigo}.`);
       ids.add(c.codigo);
@@ -87,7 +103,7 @@
     });
   }
   function planCenterImport(current, input) {
-    const imported=validateCenters(input,current);
+    const imported=validateCenters(input,{existing:current});
     const byCode=new Map(current.map(center=>[center.codigo,center]));
     const changes=[];
     for(const center of imported) {
@@ -162,9 +178,12 @@
         if (!row[F[k]-1].trim()) fail(`Registro ${i+1}: falta ${k}.`);
       }
       for (const [key,[label,max]] of Object.entries(CENTER_FIELDS)) {
-        if (F[key]) text(row[F[key]-1],`Registro ${i+1}, ${label}`,max);
+        const field=key==='nombreCentro'?F.empresa:F[key];
+        if (!field) continue;
+        const fieldLabel=`Registro ${i+1}, ${label}`;
+        text(row[field-1],fieldLabel,max,key==='nombreCentro');
+        checkRecipientCharacters(key,row[field-1],fieldLabel);
       }
-      text(row[22],`Registro ${i+1}, centro`,150,true);
       text(row[45],`Registro ${i+1}, referencia`,100,true);
       if (!/^\d{5}$/.test(row[35])) fail(`Registro ${i+1}: código postal no válido.`);
       if (emailForExport(row[42])!==row[42]) fail(`Registro ${i+1}: el email de Correos no puede contener caracteres no ASCII.`);
@@ -188,7 +207,7 @@
   }
   function generate({centros,destinos,config={...DEFAULTS},fecha=dateKey(),inicio=1}) {
     validateConfig(config); checkDate(fecha);
-    const list=validateCenters(centros), lookup=new Map(list.map(c=>[c.codigo,c]));
+    const list=validateCenters(centros,{allowLegacyCharacters:true}), lookup=new Map(list.map(c=>[c.codigo,c]));
     if (!Number.isSafeInteger(inicio) || inicio<1 || inicio>999999) fail('Número inicial: entero entre 1 y 999999.');
     if (!Array.isArray(destinos) || !destinos.length) fail('Selecciona al menos un destino con uno o más bultos.');
     const parcels=[], used=new Set();

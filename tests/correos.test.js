@@ -122,3 +122,29 @@ test('importar agenda reserva los códigos explícitos y rechaza duplicados',()=
   assert.deepEqual(C.planCenterImport(current,input).imported.map(c=>c.codigo),['CENTRO-008','CENTRO-007']);
   assert.throws(()=>C.planCenterImport(current,[input[1],input[1]]),/duplicado/);
 });
+test('caracteres de destinatario: rechaza el acento suelto del registro rechazado por Correos',()=>{
+  const invalid={...base,nombreCentro:'CENTRO L´',apellido1:'L´'};
+  assert.match(C.centerErrors(invalid,false).join(' '),/Centro:.*U\+00B4.*Primer apellido:.*U\+00B4/);
+  assert.throws(()=>C.planCenterImport([base],[invalid]),/U\+00B4/);
+  assert.throws(()=>run(1,invalid,{codificacion:'utf-8'}),/U\+00B4/);
+  for(const key of ['nombre','apellido2','via','numero','complemento','localidad','provincia']) {
+    assert.throws(()=>run(1,{[key]:'A💥'},{codificacion:'utf-8'}),/U\+1F4A5/);
+  }
+});
+test('caracteres de destinatario: conserva agendas anteriores y bloquea solo centros afectados',()=>{
+  const bad={...base,codigo:'TEST-2',apellido1:'L´'};
+  const centros=C.validateCenters([base,bad],{allowLegacyCharacters:true});
+  assert.equal(centros[1].apellido1,'L´');
+  assert.deepEqual(C.cleanDraft(centros,{'TEST-1':1,'TEST-2':1}),{'TEST-1':1,'TEST-2':0});
+  assert.equal(run(1,{}, {},{centros}).records.length,1);
+  assert.throws(()=>run(1,{}, {},{centros,destinos:[{codigo:'TEST-2',bultos:1}]}),/U\+00B4/);
+});
+test('TXT: conserva tildes, apóstrofo recto y signos observados y rechaza alteraciones',()=>{
+  const r=run(1,{nombreCentro:"L'HOSPITALET, CENTRO Á",apellido1:'GARCÍA-LÓPEZ',complemento:'PLANTA 1 – (A)'});
+  assert.equal(r.records[0][C.F.empresa-1],"L'HOSPITALET, CENTRO Á");
+  for(const field of ['empresa','apellido1','via']) {
+    const rows=r.records.map(row=>row.slice());
+    rows[0][C.F[field]-1]+='´';
+    assert.throws(()=>C.validateTXT(rows[0].join('\t')+'\r\n'),/U\+00B4/);
+  }
+});
