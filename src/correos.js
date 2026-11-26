@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.3.0';
+  const VERSION = '1.4.0';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -13,7 +13,11 @@
     totalBultos:14, numeroBulto:15, nombre:19, apellido1:20, apellido2:21,
     empresa:23, tipoVia:25, via:26, complemento:27, numero:28, localidad:34,
     provincia:35, cp:36, pais:38, telefono:42, email:43, referencia:46,
-    modalidad:49, peso:50, largo:51, alto:52, ancho:53, fin:186});
+    modalidad:49, peso:50, largo:51, alto:52, ancho:53, tipoEnvio:111, fin:186});
+  // Canarias (35, 38), Ceuta (51) y Melilla (52): fuera del territorio aduanero de la UE.
+  // Las valijas se declaran como Documentos: campo 111 = 1, sin más datos de aduana (comprobado con un envío real de Correos).
+  const ADUANA = /^(35|38|51|52)/;
+  const DOCUMENTOS = '1';
   const CENTER_FIELDS = Object.freeze({codigo:['Código interno',40],nombreCentro:['Centro',150],
     nombre:['Nombre',300],apellido1:['Primer apellido',50],apellido2:['Segundo apellido',50],
     tipoVia:['Tipo de vía',3],via:['Vía',100],numero:['Número',5],complemento:['Complemento',100],
@@ -53,7 +57,6 @@
       if (c.activo!==true) errors.push('Centro inactivo.');
       if (c.validado!==true) errors.push('Destinatario pendiente de validar.');
       if (c.tipoVia && !Object.hasOwn(TIPOS_VIA,c.tipoVia)) errors.push(`Tipo de vía no admitido por Correos: ${c.tipoVia}. Elige uno de la lista.`);
-      if (/^(35|38|51|52)/.test(c.cp)) errors.push('Esta versión no admite destinos que requieren información aduanera.');
     }
     return errors;
   }
@@ -152,6 +155,7 @@
       text(row[45],`Registro ${i+1}, referencia`,100,true);
       if (!/^\d{5}$/.test(row[35])) fail(`Registro ${i+1}: código postal no válido.`);
       if (emailForExport(row[42])!==row[42]) fail(`Registro ${i+1}: el email de Correos no puede contener caracteres no ASCII.`);
+      if (row[F.tipoEnvio-1]!==(ADUANA.test(row[35])?DOCUMENTOS:'')) fail(`Registro ${i+1}: tipo de envío de aduana incorrecto.`);
       if (row[13]!=='01' || row[14]!=='01') fail(`Registro ${i+1}: cada bulto debe ser una expedición independiente.`);
       if (refs.has(row[45])) fail('Las referencias de envío se repiten.');
       refs.add(row[45]);
@@ -195,6 +199,7 @@
       for (const key of ['nombre','apellido1','apellido2']) set(key,normalizeName(c[key],config.normalizarEnie));
       for (const key of ['tipoVia','via','complemento','numero','localidad','provincia','cp','telefono']) set(key,c[key]);
       set('email',emailForExport(c.email));
+      if (ADUANA.test(c.cp)) set('tipoEnvio',DOCUMENTOS);
       set('empresa',c.nombreCentro); set('totalBultos','01'); set('numeroBulto','01');
       set('referencia',`${config.prefijo}-${fecha}-${String(inicio+i).padStart(3,'0')}`);
       set('fin','E');
@@ -231,7 +236,7 @@
       const key=[get(r,'empresa'),destinatario,direccion,get(r,'cp')].join('|'), last=groups.at(-1);
       if (last && last.key===key) { last.bultos++; last.hasta=get(r,'referencia'); continue; }
       groups.push({key,centro:get(r,'empresa'),destinatario,direccion,cp:get(r,'cp'),localidad:get(r,'localidad'),
-        provincia:get(r,'provincia'),bultos:1,desde:get(r,'referencia'),hasta:get(r,'referencia')});
+        provincia:get(r,'provincia'),documentos:get(r,'tipoEnvio')===DOCUMENTOS,bultos:1,desde:get(r,'referencia'),hasta:get(r,'referencia')});
     }
     return groups.map(({key,...g})=>g);
   }

@@ -42,7 +42,7 @@ No añadas a Git la agenda real, copias de seguridad, TXT de envíos, hojas de c
 
 ## Alcance
 
-Formato 2018v002, Paq Premium o Paq Estándar a domicilio, España, sin servicios aduaneros o adicionales. Hasta 150 bultos por archivo. Peso y medidas comunes por envío. La identificación del remitente procede de la cuenta de Correos. Las validaciones internas requieren nombre y dos apellidos.
+Formato 2018v002, Paq Premium o Paq Estándar a domicilio, España, sin servicios adicionales. Los envíos a Canarias, Ceuta y Melilla (CP 35, 38, 51 y 52) se declaran automáticamente como Documentos (campo 111 = 1). Hasta 150 bultos por archivo. Peso y medidas comunes por envío. La identificación del remitente procede de la cuenta de Correos. Las validaciones internas requieren nombre y dos apellidos.
 
 Consulta la [guía del formato de Correos](https://epostal.correos.es/OV2PREENVWEB/plantillas/GuiadeAyuda.pdf).
 
