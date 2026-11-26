@@ -86,7 +86,7 @@
     const q=$('search').value.trim(), centers=visibleRows();
     $('destinations').innerHTML=centers.map(c=>{
       const errors=C.centerErrors(c), blocked=errors.length>0;
-      return `<tr data-center="${escape(c.codigo)}" class="${quantity(c)>0?'selected':''}"><td><span class="destination-title">${escape(c.nombreCentro)}</span><span class="destination-meta">${escape(c.via)} ${escape(c.numero)} · ${escape(c.cp)} ${escape(c.localidad)}</span>${blocked?`<span class="destination-warning">${escape(errors[0])} Revisa este centro en la agenda.</span>`:''}</td><td><input class="qty" type="number" min="0" max="150" step="1" value="${escape(quantity(c))}" aria-label="Bultos para ${escape(c.nombreCentro)}" ${blocked?'disabled':''}></td><td><button class="remove" aria-label="Quitar ${escape(c.nombreCentro)} del envío" ${blocked?'disabled':''}>×</button></td></tr>`;
+      return `<tr data-center="${escape(c.codigo)}" class="${quantity(c)>0?'selected':''}"><td><span class="destination-title">${escape(c.nombreCentro)}</span><span class="destination-meta">${escape(c.via)} ${escape(c.numero)} · ${escape(c.cp)} ${escape(c.localidad)}</span>${blocked?`<span class="destination-warning">${escape(errors[0])} Revisa este centro en la agenda.</span>`:''}</td><td><input class="qty" type="number" min="0" max="150" step="1" value="${escape(quantity(c))}" aria-label="Bultos para ${escape(c.nombreCentro)}" ${blocked?'disabled':''}></td><td><button class="reset-quantity quiet" aria-label="Poner a 0 los bultos para ${escape(c.nombreCentro)}" ${blocked||quantity(c)===0?'hidden':''}>Poner a 0</button></td></tr>`;
     }).join('')||'<tr><td colspan="3">No hay centros que coincidan con la búsqueda.</td></tr>';
     const available=state.centros.filter(c=>C.centerErrors(c).length===0).length;
     const scope=q?`${centers.length} resultados en toda la agenda`:favoritos()?`Mostrando favoritos (${centers.length} de ${state.centros.length} centros) · Busca para ver el resto`:'Mostrando todos los centros · Marca favoritos en Centros para ver aquí solo esos';
@@ -170,12 +170,17 @@
     state.draft[id]=n; edited();
     const valid=Number.isInteger(n)&&n>=0&&n<=150;
     input.setAttribute('aria-invalid',String(!valid));
-    input.closest('tr').classList.toggle('selected',valid&&n>0);
+    const row=input.closest('tr');
+    row.classList.toggle('selected',valid&&n>0);
+    row.querySelector('.reset-quantity').hidden=n===0;
     persist();renderSummary();
   });
   $('destinations').addEventListener('click',event=>{
-    const button=event.target.closest('.remove');if(!button)return;
-    state.draft[button.closest('tr').dataset.center]=0;edited();persist();renderRows();
+    const button=event.target.closest('.reset-quantity');if(!button)return;
+    const code=button.closest('tr').dataset.center;
+    state.draft[code]=0;edited();persist();renderRows();
+    const row=[...$('destinations').rows].find(row=>row.dataset.center===code);
+    (row?.querySelector('.qty')||$('search')).focus();
   });
   // Pone 1 bulto a cada centro de la lista visible; los demás quedan como estaban.
   $('one-each').onclick=()=>{for(const c of visibleRows())state.draft[c.codigo]=C.centerErrors(c).length?0:1;edited();persist();renderRows();};
