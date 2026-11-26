@@ -19,7 +19,7 @@
     <main id="main">
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="remesa" class="page">
-        <div class="page-heading"><div><p class="eyebrow" id="today"></p><h1>Envío de valijas</h1><p>Selecciona los destinos e indica el número de bultos.</p></div><div class="toolbar"><button id="export-backup-shipment" class="secondary">Guardar copia completa</button><button id="new" class="secondary">Nuevo envío</button></div></div>
+        <div class="page-heading"><div><p class="eyebrow" id="today"></p><h1>Envío de valijas</h1><p>Selecciona los destinos e indica el número de bultos.</p></div><button id="new" class="secondary">Nuevo envío</button></div>
         <div class="workspace">
           <div class="card destinations"><div class="card-heading"><div><h2>Centros destinatarios</h2><p>Deja en 0 los centros a los que hoy no envías.</p></div><button id="one-each" class="quiet">1 a cada centro de la lista</button></div>
             <label class="search"><span>Buscar centro o localidad</span><input id="search" type="search" placeholder="Por ejemplo, Lugo" autocomplete="off"></label>
@@ -45,7 +45,7 @@
         <label>Codificación del TXT<select name="codificacion"><option value="windows-1252">Windows-1252 (ANSI occidental)</option><option value="utf-8">UTF-8 sin BOM</option><option value="utf-8-bom">UTF-8 con BOM</option></select></label>
         <label>Estructura<select name="estructura"><option value="2018v002">2018v002 · 186 campos</option></select></label><label>País<select name="pais"><option value="ES">España (ES)</option></select></label><label>Modalidad<select name="modalidad"><option value="ST">Domicilio (ST)</option></select></label>
       </div><label class="checkbox"><input name="normalizarEnie" type="checkbox">Cambiar Ñ por N solo en nombre y apellidos al exportar</label><p class="hint">Este ajuste solo afecta al archivo TXT. Las localidades y provincias conservan la Ñ.</p><p class="hint">Envíos nacionales a domicilio. El remitente corresponde a la cuenta de Correos.</p><button type="submit" class="primary">Guardar configuración</button></form>
-        <div class="card backup"><h2>Copia de seguridad</h2><p>Guarda o restaura los centros, la configuración y los contadores de referencias.</p><div class="toolbar"><button id="export-backup" class="secondary">Guardar copia completa</button><button id="import-backup" class="secondary">Restaurar copia</button></div><p id="storage-status" class="hint"></p></div>
+        <div class="card backup"><h2>Copia de seguridad</h2><p>Guardar copia completa descarga un archivo JSON con tus centros y favoritos, la configuración de Correos, los bultos del envío en curso y los contadores de referencias. Guárdalo antes de actualizar o cambiar de navegador u ordenador. Si necesitas recuperar los datos, pulsa Restaurar copia y selecciona ese archivo.</p><div class="toolbar"><button id="export-backup" class="secondary">Guardar copia completa</button><button id="import-backup" class="secondary">Restaurar copia</button></div><p id="storage-status" class="hint"></p></div>
       </section>
       <section id="ayuda" class="page" hidden>
         <div class="page-heading"><div><p class="eyebrow">AYUDA</p><h1>Cómo enviar valijas</h1></div></div>

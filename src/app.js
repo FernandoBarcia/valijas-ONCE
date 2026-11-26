@@ -303,7 +303,7 @@
   function selectFile(action){fileAction=action;$('file-input').value='';$('file-input').click();}
   $('import-centers').onclick=()=>selectFile('centers');$('import-backup').onclick=()=>selectFile('backup');
   $('export-centers').onclick=()=>jsonDownload(state.centros,'centros.json');
-  $('export-backup').onclick=$('export-backup-shipment').onclick=()=>jsonDownload({...state,exportedAt:new Date().toISOString()},`VALIJAS_COPIA_${stamp()}.json`);
+  $('export-backup').onclick=()=>jsonDownload({...state,exportedAt:new Date().toISOString()},`VALIJAS_COPIA_${stamp()}.json`);
   $('file-input').onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
     try {
