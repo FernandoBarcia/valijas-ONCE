@@ -24,20 +24,24 @@
     }
     localStorage.setItem(KEY,JSON.stringify(state));
   } catch(e) { storageOK=false; message('No se ha podido recuperar o guardar la copia del navegador. Se han cargado los centros originales. Importa tu copia completa y comprueba el siguiente número de referencia. '+e.message,true); }
-  function persist() {
+  function persist(nextState=state) {
     try {
       if(storageDamaged) throw Error('Copia del navegador no válida.');
       const saved=localStorage.getItem(KEY);
       if(saved) {
-        try { state.counters=C.mergeCounters(state.counters,parseState(saved).counters); }
+        try { nextState.counters=C.mergeCounters(nextState.counters,parseState(saved).counters); }
         catch(e) { storageDamaged=true; throw e; }
       }
-      localStorage.setItem(KEY,JSON.stringify(state)); storageOK=true;
+      localStorage.setItem(KEY,JSON.stringify(nextState)); storageOK=true;
     }
     catch(e) { storageOK=false; }
     $('storage-status').hidden=storageOK;
     $('storage-status').textContent=storageOK?'':'No se han podido guardar los cambios. Descarga una copia completa antes de cerrar.';
     return storageOK;
+  }
+  function reportSave(saved,success) {
+    if(saved) message(success);
+    else message('Los cambios solo están en esta pestaña. Guarda una copia completa antes de cerrar.',true);
   }
   const counterKey=()=>state.config.prefijo+':'+C.dateKey();
   function minimumStart() { return state.counters[counterKey()]||1; }
@@ -119,23 +123,22 @@
     if(storageDamaged) throw Error('La copia del navegador no es válida. Restaura una copia completa desde Configuración antes de generar para no repetir referencias.');
     const start=Number($('start').value);
     // Re-read persistent high-water marks immediately before reserving references.
-    if(storageOK) {
-      const raw=localStorage.getItem(KEY);
-      if(raw) {
-        const saved=parseState(raw);
-        if(JSON.stringify(saved.centros)!==JSON.stringify(state.centros)||JSON.stringify(saved.config)!==JSON.stringify(state.config)) throw Error('Los datos han cambiado en otra pestaña. Recarga la aplicación antes de generar.');
-        state.counters=C.mergeCounters(state.counters,saved.counters);
-      }
+    const raw=localStorage.getItem(KEY);
+    if(raw) {
+      const saved=parseState(raw);
+      if(JSON.stringify(saved.centros)!==JSON.stringify(state.centros)||JSON.stringify(saved.config)!==JSON.stringify(state.config)) throw Error('Los datos han cambiado en otra pestaña. Recarga la aplicación antes de generar.');
+      state.counters=C.mergeCounters(state.counters,saved.counters);
     }
     if(!Number.isInteger(start)||start<minimumStart()) throw Error(`Usa un número de referencia igual o superior a ${minimumStart()}.`);
     const destinos=state.centros.filter(c=>quantity(c)!==0).map(c=>({codigo:c.codigo,bultos:quantity(c)}));
     const result=C.generate({centros:state.centros,destinos,config:state.config,inicio:start});
-    state.counters[counterKey()]=result.siguiente;
-    const saved=persist();
+    const nextState={...state,counters:{...state.counters,[counterKey()]:result.siguiente}};
+    if(!persist(nextState)) throw Error('No se pudo guardar la reserva de referencias. Comprueba el almacenamiento del navegador antes de volver a generar.');
+    state=nextState;
     lastFile={bytes:result.bytes,name:`VALIJAS_CORREOS_${stamp()}.txt`};
     download(lastFile.bytes,lastFile.name,'text/plain');
     $('redownload').hidden=false; refreshCounter();
-    message(`TXT preparado: ${result.records.length} paquetes. Descarga iniciada.\nReferencias: ${result.referencias[0]} a ${result.referencias.at(-1)}.\nArchivo listo para importar en Correos.${saved?'':'\nNo se pudo guardar el contador: exporta ahora una copia completa antes de cerrar.'}`);
+    message(`TXT preparado: ${result.records.length} paquetes. Descarga iniciada.\nReferencias: ${result.referencias[0]} a ${result.referencias.at(-1)}.\nArchivo listo para importar en Correos.`);
     $('message').scrollIntoView({block:'nearest',behavior:'smooth'});
   }
   async function runGenerate() {
@@ -190,7 +193,7 @@
     event.preventDefault();
     try {
       const data=Object.fromEntries(new FormData(event.target));data.normalizarEnie=event.target.elements.normalizarEnie.checked;
-      C.validateConfig(data);state.config=data;persist();refreshCounter();renderSummary();message('Configuración guardada. Se aplicará al próximo TXT.');
+      C.validateConfig(data);state.config=data;const saved=persist();refreshCounter();renderSummary();reportSave(saved,'Configuración guardada. Se aplicará al próximo TXT.');
     }catch(e){message(e.message,true,'settings');}
   };
   function renderCenters() {
@@ -241,7 +244,7 @@
     if(state.centros.length===1){$('center-error').textContent='La agenda debe tener al menos un centro. Añade otro antes de eliminar este.';return;}
     if(!confirm(`¿Eliminar ${c.nombreCentro} de la agenda? Esta acción no se puede deshacer, salvo restaurando una copia completa.`))return;
     state.centros=state.centros.filter(x=>x.codigo!==editing);delete state.draft[editing];edited();
-    persist();renderCenters();renderRows();$('center-dialog').close();message(`Centro eliminado: ${c.nombreCentro}.`);
+    const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,`Centro eliminado: ${c.nombreCentro}.`);
   };
   $('center-form').onsubmit=e=>{
     e.preventDefault();
@@ -253,13 +256,13 @@
       if(c.validado){const errors=C.centerErrors({...c,activo:true});if(errors.length)throw Error('No se puede marcar como validado:\n'+errors.join('\n'));}
       const list=editing?state.centros.map(old=>old.codigo===editing?c:old):[...state.centros,c];
       state.centros=C.validateCenters(list);if(C.centerErrors(c).length)state.draft[c.codigo]=0;
-      persist();renderCenters();renderRows();$('center-dialog').close();message('Centro guardado.');
+      const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,'Centro guardado.');
     }catch(err){$('center-error').textContent=err.message;}
   };
   function selectFile(action){fileAction=action;$('file-input').value='';$('file-input').click();}
   $('import-centers').onclick=()=>selectFile('centers');$('import-backup').onclick=()=>selectFile('backup');
   $('export-centers').onclick=()=>jsonDownload(state.centros,'centros.json');
-  $('export-backup').onclick=()=>jsonDownload({...state,exportedAt:new Date().toISOString()},`VALIJAS_COPIA_${stamp()}.json`);
+  $('export-backup').onclick=$('export-backup-shipment').onclick=()=>jsonDownload({...state,exportedAt:new Date().toISOString()},`VALIJAS_COPIA_${stamp()}.json`);
   $('file-input').onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
     try {
@@ -278,7 +281,7 @@
           storageDamaged=false;
         }
       }
-      persist();renderRows();renderCenters();fillSettings();refreshCounter();message('Centros y datos importados.');
+      const saved=persist();renderRows();renderCenters();fillSettings();refreshCounter();reportSave(saved,'Centros y datos importados.');
     }catch(err){message('No se ha importado el archivo: '+err.message,true);}
   };
   window.addEventListener('storage',event=>{

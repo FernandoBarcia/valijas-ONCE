@@ -15,7 +15,6 @@ for(const [marker,content] of [
   ['/* CENTERS */',JSON.stringify(JSON.parse(read(centerPath))).replace(/</g,'\\u003c')],
   ['/* CORE */',read('src/correos.js')],['/* APP */',read('src/app.js')]
 ]) html=html.replace(marker,()=>content);
-fs.writeFileSync(path.join(root,'Valijas ONCE.html'),html);
-const filename=`Valijas-ONCE-v${version}.html`;
+const filename='Valijas-ONCE.html';
 fs.writeFileSync(path.join(root,filename),html);
-console.log(`${filename} generado.`);
+console.log(`${filename} generado (v${version}).`);

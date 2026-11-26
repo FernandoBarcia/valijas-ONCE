@@ -1,0 +1,45 @@
+name: Verificar y publicar
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: valijas-once
+          path: Valijas-ONCE.html
+          if-no-files-found: error
+
+  publicar:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: verificar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: valijas-once
+      - name: Publicar la versión si todavía no existe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" "Valijas-ONCE.html" --target "$GITHUB_SHA" --title "Valijas ONCE $tag" --generate-notes
+          fi

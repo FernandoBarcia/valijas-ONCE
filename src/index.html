@@ -19,7 +19,7 @@
     <main id="main">
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="remesa" class="page">
-        <div class="page-heading"><div><p class="eyebrow" id="today"></p><h1>Envío de valijas</h1><p>Selecciona los destinos e indica el número de bultos.</p></div><button id="new" class="secondary">Nuevo envío</button></div>
+        <div class="page-heading"><div><p class="eyebrow" id="today"></p><h1>Envío de valijas</h1><p>Selecciona los destinos e indica el número de bultos.</p></div><div class="toolbar"><button id="export-backup-shipment" class="secondary">Guardar copia completa</button><button id="new" class="secondary">Nuevo envío</button></div></div>
         <div class="workspace">
           <div class="card destinations"><div class="card-heading"><div><h2>Centros destinatarios</h2><p>Deja en 0 los centros a los que hoy no envías.</p></div><button id="one-each" class="quiet">1 a cada centro de la lista</button></div>
             <label class="search"><span>Buscar centro o localidad</span><input id="search" type="search" placeholder="Por ejemplo, Lugo" autocomplete="off"></label>
@@ -56,7 +56,7 @@
           <li><strong>Importa el archivo en Correos.</strong> Selecciona el TXT en Importar fichero y pulsa Iniciar carga del documento. Continúa el proceso para confirmar los envíos e imprimir las etiquetas.</li>
         </ol><h2>Centros</h2><p>Un centro está disponible cuando está activo, tiene un destinatario validado y contiene los datos necesarios. Para modificarlo, selecciona Editar centro. Desde ahí también puedes eliminarlo. Marca con la estrella los centros habituales: la pantalla inicial mostrará solo los favoritos y, al buscar, toda la agenda. Si no hay ninguno marcado, se muestran todos. El código interno de cada centro se asigna automáticamente. El tipo de vía se elige de la lista de Correos (Calle C, Avenida AV, Plaza PLA…).</p>
         <h2>Referencias y descargas</h2><p>Nuevo envío vacía las cantidades y conserva el contador de referencias. Generar TXT Correos asigna referencias nuevas. Descargar de nuevo recupera el último archivo de la sesión sin cambiar las referencias.</p>
-        <h2>Copias de seguridad</h2><p>En Configuración puedes guardar y restaurar una copia completa. Incluye los centros, la configuración y los contadores. Para cambiar de navegador u ordenador, restaura la copia más reciente y utiliza una sola pestaña para generar archivos.</p>
+        <h2>Copias de seguridad</h2><p>En Configuración puedes guardar y restaurar una copia completa. Incluye los centros, la configuración y los contadores. Para actualizar, reemplaza el HTML en la misma carpeta con el nombre que ya usabas y usa el mismo navegador. Si cambias de nombre, carpeta, navegador u ordenador y no aparecen tus centros, restaura la copia más reciente. Utiliza una sola pestaña para generar archivos.</p>
         <h2>Canarias, Ceuta y Melilla</h2><p>Los envíos a estos destinos se declaran automáticamente como Documentos para la aduana. No tienes que hacer nada más.</p>
         <h2>Archivos TXT</h2><p>Importa el archivo directamente en Correos. No lo vuelvas a guardar con Excel, ya que puede alterar su formato.</p></div>
       </section>

@@ -4,7 +4,11 @@ Herramienta para facilitar el envío de valijas: selecciona centros, indica los 
 
 Contacto · fernando.barcia@once.es
 
-## Puesta en marcha
+## Descargar y usar
+
+Descarga `Valijas-ONCE.html` desde [Releases](https://github.com/FernandoBarcia/valijas-ONCE/releases/latest) y ábrelo en Safari o Chrome. Funciona sin instalación y sin conexión.
+
+## Construir desde el código fuente
 
 Requiere Node.js 22 o superior solo para desarrollar y construir el HTML. No hay dependencias que instalar.
 
@@ -13,7 +17,7 @@ npm test
 npm run build
 ```
 
-Abre el HTML versionado que produce el build en Safari o Chrome. La aplicación funciona sin servidor. El repositorio contiene únicamente centros ficticios. El código etiquetador por defecto es `9KAQ`; se puede cambiar en Configuración.
+Abre `Valijas ONCE.html`, que produce el build, en Safari o Chrome. La aplicación funciona sin servidor. El repositorio contiene únicamente centros ficticios. El código etiquetador por defecto es `9KAQ`; se puede cambiar en Configuración.
 
 Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguiendo `data/centros.example.json` y reconstruye. Ese archivo está excluido de Git.
 
@@ -34,7 +38,7 @@ La versión de trabajo ha sido utilizada con éxito en la web de Correos. La age
 
 `src/correos.js` contiene el generador y las validaciones; `src/app.js`, la interfaz y persistencia; `src/index.html` y `src/styles.css`, la presentación. Los iconos están en `assets/` y se incrustan en el HTML. `build.js` empaqueta la aplicación en un HTML y comprueba la coincidencia de versiones. Las pruebas utilizan `node:test` sin dependencias.
 
-La versión figura en `package.json` y `src/correos.js`; deben actualizarse juntas. Al abrir una versión con otro nombre de archivo, restaura una copia completa para conservar tus datos y contadores si el navegador utiliza almacenamiento separado.
+La versión figura en `package.json` y `src/correos.js`; deben actualizarse juntas. Para actualizar, guarda una copia completa y sustituye `Valijas ONCE.html` en la misma carpeta. Usa el mismo navegador y perfil. Si al abrirlo faltan tu agenda o tus contadores, restaura la copia completa.
 
 ## Datos de trabajo
 
