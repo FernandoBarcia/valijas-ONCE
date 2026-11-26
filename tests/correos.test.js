@@ -74,3 +74,12 @@ test('revisión: un grupo por destino con bultos y primera y última referencia'
   assert.equal(g[0].destinatario,'MARÍA CAMANO TOURINAN','los nombres salen como en el TXT');
   assert.equal(g[0].direccion,'C PRUEBA 1');
 });
+test('código interno automático: siguiente libre y sin reutilizar huecos',()=>{
+  assert.equal(C.nextCode([]),'CENTRO-001');
+  assert.equal(C.nextCode([base]),'CENTRO-001');
+  assert.equal(C.nextCode([{codigo:'CENTRO-001'},{codigo:'CENTRO-007'},{codigo:'EJEMPLO-050'}]),'CENTRO-008');
+});
+test('centros importados sin código reciben uno automático y único',()=>{
+  const list=C.validateCenters([{...base,codigo:'CENTRO-004'},{...base,codigo:''},{...base,codigo:undefined}]);
+  assert.deepEqual(list.map(c=>c.codigo),['CENTRO-004','CENTRO-005','CENTRO-006']);
+});

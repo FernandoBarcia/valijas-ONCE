@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -52,12 +52,24 @@
     }
     return errors;
   }
+  // Código interno automático: CENTRO-001, CENTRO-002… Nunca reutiliza uno por debajo del mayor existente.
+  const CODE_PREFIX='CENTRO-';
+  function nextCode(centros, taken=new Set()) {
+    let max=0;
+    for (const c of [...(centros||[]).map(c=>c?.codigo),...taken]) {
+      const m=typeof c==='string' && c.match(/^CENTRO-(\d{1,6})$/);
+      if (m) max=Math.max(max,Number(m[1]));
+    }
+    return CODE_PREFIX+String(max+1).padStart(3,'0');
+  }
   function validateCenters(list) {
     if (!Array.isArray(list) || !list.length || list.length>500) fail('El archivo debe contener entre 1 y 500 centros.');
-    const ids=new Set();
+    const ids=new Set(), assigned=new Set();
     return list.map((input,i)=>{
       const c={};
       for (const key of Object.keys(CENTER_FIELDS)) c[key]=input?.[key] ?? '';
+      // Centros importados sin código: se les asigna uno automáticamente.
+      if (c.codigo==='') { c.codigo=nextCode(list,assigned); assigned.add(c.codigo); }
       c.activo=input?.activo; c.validado=input?.validado;
       const errors=centerErrors(c,false);
       if (errors.length) fail(`Centro ${i+1}: ${errors.join(' ')}`);
@@ -232,7 +244,7 @@
     for (const [k,v] of Object.entries(validateCounters(b))) result[k]=Math.max(result[k]||1,v);
     return result;
   }
-  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,validateConfig,dateKey,
+  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,nextCode,validateConfig,dateKey,
     normalizeName,encode,validateRecords,validateTXT,generate,validateCounters,mergeCounters,
     quantityFrom,cleanDraft,reviewGroups};
 });

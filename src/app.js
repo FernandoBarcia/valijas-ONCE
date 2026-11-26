@@ -190,9 +190,13 @@
     }).join('');
   }
   function editCenter(id) {
-    editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:'',nombreCentro:'',activo:true,validado:false};
+    editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:C.nextCode(state.centros),nombreCentro:'',activo:true,validado:false};
     $('dialog-title').textContent=id?'Editar centro':'Añadir centro';
-    $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>`<label>${escape(label)}${['codigo','nombreCentro'].includes(k)?' *':''}<input name="${k}" maxlength="${max}" value="${escape(c[k]||'')}" ${['codigo','nombreCentro'].includes(k)?'required':''} ${k==='codigo'&&id?'readonly':''} ${k==='cp'?'inputmode="numeric"':''}></label>`).join('');
+    $('delete-center').hidden=!id;
+    // El código interno es automático: se muestra, pero no se escribe.
+    $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>k==='codigo'
+      ?`<label>${escape(label)}<input name="codigo" value="${escape(c.codigo)}" readonly aria-describedby="codigo-help"><small id="codigo-help">Se asigna automáticamente.</small></label>`
+      :`<label>${escape(label)}${k==='nombreCentro'?' *':''}<input name="${k}" maxlength="${max}" value="${escape(c[k]||'')}" ${k==='nombreCentro'?'required':''} ${k==='cp'?'inputmode="numeric"':''}></label>`).join('');
     $('center-form').elements.activo.checked=c.activo;$('center-form').elements.validado.checked=c.validado;
     const emailInput=$('center-form').elements.email;
     emailInput.type='email';emailInput.autocapitalize='none';emailInput.spellcheck=false;
@@ -210,6 +214,14 @@
   $('center-cards').onclick=e=>{const b=e.target.closest('[data-edit]');if(b)editCenter(b.dataset.edit);};
   $('add-center').onclick=()=>editCenter(null);
   $('close-dialog').onclick=$('cancel-center').onclick=()=>$('center-dialog').close();
+  // Eliminar: quita el centro de la agenda y del envío en curso. Los contadores de referencias no cambian.
+  $('delete-center').onclick=()=>{
+    const c=state.centros.find(c=>c.codigo===editing);if(!c)return;
+    if(state.centros.length===1){$('center-error').textContent='La agenda debe tener al menos un centro. Añade otro antes de eliminar este.';return;}
+    if(!confirm(`¿Eliminar ${c.nombreCentro} de la agenda? Esta acción no se puede deshacer, salvo restaurando una copia completa.`))return;
+    state.centros=state.centros.filter(x=>x.codigo!==editing);delete state.draft[editing];edited();
+    persist();renderCenters();renderRows();$('center-dialog').close();message(`Centro eliminado: ${c.nombreCentro}.`);
+  };
   $('center-form').onsubmit=e=>{
     e.preventDefault();
     try {
