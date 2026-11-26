@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const C=window.Correos, $=id=>document.getElementById(id), KEY='valijas-once-v1';
-  const original=C.validateCenters(JSON.parse($('initial-centers').textContent));
+  const original=C.validateCenters(JSON.parse($('initial-centers').textContent),{allowLegacyCharacters:true});
   let state={schema:1,centros:original,config:{...C.DEFAULTS},counters:{},draft:{}};
   let storageOK=true, storageDamaged=false, lastFile=null, editing=null, fileAction=null, busy=false, messageSource=null;
   const escape=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -12,7 +12,7 @@
   function parseState(raw) {
     const data=JSON.parse(raw);
     if (data.schema!==1) throw Error('Versión de copia no soportada.');
-    const centros=C.validateCenters(data.centros), config={...data.config}; C.validateConfig(config);
+    const centros=C.validateCenters(data.centros,{allowLegacyCharacters:true}), config={...data.config}; C.validateConfig(config);
     const counters=C.validateCounters(data.counters), draft=C.cleanDraft(centros,data.draft);
     return {schema:1,centros,config,counters,draft};
   }
@@ -258,7 +258,7 @@
       const errors=C.centerErrors(c,false);if(errors.length)throw Error(errors.join('\n'));
       if(c.validado){const errors=C.centerErrors({...c,activo:true});if(errors.length)throw Error('No se puede marcar como validado:\n'+errors.join('\n'));}
       const list=editing?state.centros.map(old=>old.codigo===editing?c:old):[...state.centros,c];
-      state.centros=C.validateCenters(list);if(C.centerErrors(c).length)state.draft[c.codigo]=0;
+      state.centros=C.validateCenters(list,{allowLegacyCharacters:true});if(C.centerErrors(c).length)state.draft[c.codigo]=0;
       const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,'Centro guardado.');
     }catch(err){$('center-error').textContent=err.message;}
   };
