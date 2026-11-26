@@ -259,6 +259,47 @@
       const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,'Centro guardado.');
     }catch(err){$('center-error').textContent=err.message;}
   };
+  function previewCenterImport(input) {
+    const plan=C.planCenterImport(state.centros,input);
+    const added=plan.changes.filter(change=>!change.previous).length;
+    const updated=plan.changes.length-added;
+    const exceedsLimit=plan.merged.length>500;
+    const describe=center=>[center.nombreCentro,center.tipoVia+' '+center.via+' '+center.numero,center.cp+' '+center.localidad].join(' · ');
+    $('import-summary').textContent=`${added} nuevos · ${updated} para actualizar · ${plan.imported.length-plan.changes.length} sin cambios`+
+      (exceedsLimit?' · Combinar las agendas superaría el límite de 500 centros.':'');
+    const labels={...Object.fromEntries(Object.entries(C.CENTER_FIELDS).map(([key,[label]])=>[key,label])),
+      activo:'Activo',validado:'Validado',favorito:'Favorito'};
+    const display=value=>value===true?'Sí':value===false?'No':value||'Vacío';
+    $('import-rows').innerHTML=plan.changes.map(({center,previous})=>{
+      const fields=previous?Object.keys(labels).filter(key=>center[key]!==previous[key]):[];
+      const details=fields.map(key=>`<span class="destination-meta">${escape(labels[key])}: ${escape(display(previous[key]))} → ${escape(display(center[key]))}</span>`).join('');
+      return `<tr><td><strong class="destination-title">${escape(center.codigo)}</strong>`+
+        `<span class="destination-meta">${escape(describe(center))}</span>${details}</td><td>${previous?'Actualizar':'Añadir'}</td></tr>`;
+    }).join('')||'<tr><td colspan="2">El archivo coincide con los centros de la agenda.</td></tr>';
+    $('import-merge').disabled=exceedsLimit||!plan.changes.length;
+    const apply=(centros,draft)=>{
+      const nextState={...state,centros,draft};
+      if(!persist(nextState)) {
+        $('import-dialog').close();
+        message('No se pudo guardar la importación. La agenda sigue disponible. Comprueba el almacenamiento del navegador y vuelve a intentarlo.',true);
+        return;
+      }
+      state=nextState;
+      $('import-dialog').close();
+      renderRows();renderCenters();refreshCounter();message('Agenda importada.');
+    };
+    $('import-merge').onclick=()=>{
+      const draft={...state.draft};
+      for(const {center} of plan.changes) delete draft[center.codigo];
+      apply(plan.merged,draft);
+    };
+    $('import-replace').onclick=()=>{
+      const list=C.validateCenters(input);
+      if(confirm(`¿Sustituir la agenda por los ${list.length} centros del archivo? Se vaciarán todas las cantidades y se conservarán los contadores.`)) apply(list,{});
+    };
+    $('import-cancel').onclick=()=>$('import-dialog').close();
+    $('import-dialog').showModal();
+  }
   function selectFile(action){fileAction=action;$('file-input').value='';$('file-input').click();}
   $('import-centers').onclick=()=>selectFile('centers');$('import-backup').onclick=()=>selectFile('backup');
   $('export-centers').onclick=()=>jsonDownload(state.centros,'centros.json');
@@ -269,17 +310,15 @@
       if(file.size>2000000)throw Error('El archivo supera 2 MB.');
       const raw=await file.text();
       if(fileAction==='centers') {
-        const list=C.validateCenters(JSON.parse(raw));
-        if(!confirm(`¿Sustituir la agenda por los ${list.length} centros de este archivo? Se vaciarán las cantidades. Los contadores se conservan.`))return;
-        state.centros=list;state.draft={};
-      } else {
-        const restored=parseState(raw);
-        if(!confirm('¿Restaurar centros, configuración y cantidades desde esta copia? Los contadores nunca se reducirán.'))return;
-        restored.counters=C.mergeCounters(state.counters,restored.counters);state=restored;
-        if(storageDamaged) {
-          localStorage.setItem(KEY,JSON.stringify(state));
-          storageDamaged=false;
-        }
+        previewCenterImport(JSON.parse(raw));
+        return;
+      }
+      const restored=parseState(raw);
+      if(!confirm('¿Restaurar centros, configuración y cantidades desde esta copia? Los contadores nunca se reducirán.'))return;
+      restored.counters=C.mergeCounters(state.counters,restored.counters);state=restored;
+      if(storageDamaged) {
+        localStorage.setItem(KEY,JSON.stringify(state));
+        storageDamaged=false;
       }
       const saved=persist();renderRows();renderCenters();fillSettings();refreshCounter();reportSave(saved,'Centros y datos importados.');
     }catch(err){message('No se ha importado el archivo: '+err.message,true);}

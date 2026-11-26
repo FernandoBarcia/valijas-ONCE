@@ -65,6 +65,21 @@
   </div>
   <input type="file" id="file-input" accept=".json,application/json" hidden>
   <dialog id="center-dialog" aria-labelledby="dialog-title"><form id="center-form"><div class="dialog-heading"><h2 id="dialog-title">Editar centro</h2><button type="button" id="close-dialog" class="icon-button" aria-label="Cerrar">×</button></div><div class="form-grid" id="center-fields"></div><label class="checkbox"><input type="checkbox" name="activo">Centro activo</label><label class="checkbox"><input type="checkbox" name="validado">He revisado y validado el destinatario</label><label class="checkbox"><input type="checkbox" name="favorito">Favorito: mostrar en la pantalla inicial</label><p id="center-error" role="alert"></p><div class="toolbar"><button type="submit" class="primary">Guardar centro</button><button type="button" id="cancel-center" class="secondary">Cancelar</button><button type="button" id="delete-center" class="danger" hidden>Eliminar centro</button></div></form></dialog>
+  <dialog id="import-dialog" aria-labelledby="import-title">
+    <div class="dialog-heading"><h2 id="import-title">Revisar importación de centros</h2></div>
+    <p>Los centros con el mismo código interno se actualizan. Los que vienen sin código se añaden como nuevos.</p>
+    <p id="import-summary"></p>
+    <div class="table-wrap review-table"><table>
+      <thead><tr><th scope="col">Centro</th><th scope="col">Acción</th></tr></thead>
+      <tbody id="import-rows"></tbody>
+    </table></div>
+    <p class="hint">Se conservan los centros que no estén en el archivo y se vacían las cantidades de los centros actualizados. Los contadores de referencias se conservan.</p>
+    <div class="toolbar">
+      <button type="button" id="import-merge" class="primary">Añadir y actualizar</button>
+      <button type="button" id="import-replace" class="danger">Sustituir toda la agenda</button>
+      <button type="button" id="import-cancel" class="secondary" autofocus>Cancelar</button>
+    </div>
+  </dialog>
   <dialog id="review-dialog" aria-labelledby="review-title"><div class="dialog-heading"><h2 id="review-title">Revisar envío</h2><button type="button" id="close-review" class="icon-button" aria-label="Cerrar">×</button></div><p id="review-summary" class="review-summary"></p><div class="table-wrap review-table"><table><caption class="sr-only">Destinos, bultos y referencias del envío</caption><thead><tr><th scope="col">Destino</th><th scope="col">Bultos</th><th scope="col">Nº ref.</th></tr></thead><tbody id="review-rows"></tbody></table></div><p class="hint">Nombres y direcciones tal como irán en el TXT. Revisar no gasta referencias: solo Generar las reserva.</p><div class="toolbar"><button type="button" id="review-generate" class="primary">Generar TXT Correos</button><button type="button" id="review-back" class="secondary">Volver y cambiar</button></div></dialog>
   <script id="initial-centers" type="application/json">/* CENTERS */</script>
   <script>/* CORE */</script>

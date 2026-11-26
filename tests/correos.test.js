@@ -101,3 +101,24 @@ test('favorito: se conserva al validar y por defecto es false',()=>{
   const [a,b]=C.validateCenters([{...base,favorito:true},{...base,codigo:'TEST-2'}]);
   assert.equal(a.favorito,true);assert.equal(b.favorito,false);
 });
+test('importar agenda combina por código, distingue cambios y conserva centros ausentes',()=>{
+  const existing=C.validateCenters([
+    {...base,codigo:'CENTRO-001'},
+    {...base,codigo:'CENTRO-002'},
+    {...base,codigo:'CENTRO-003'}
+  ]);
+  const plan=C.planCenterImport(existing,[
+    {...existing[0],numero:'42'}, existing[1], {...base,codigo:''}
+  ]);
+  assert.deepEqual(plan.changes.map(({center,previous})=>[center.codigo,previous?.codigo]),[
+    ['CENTRO-001','CENTRO-001'],['CENTRO-004',undefined]
+  ]);
+  assert.deepEqual(plan.merged,[{...existing[0],numero:'42'}, existing[1],existing[2],plan.imported[2]]);
+  assert.notEqual(existing[0].numero,'42');
+});
+test('importar agenda reserva los códigos explícitos y rechaza duplicados',()=>{
+  const current=C.validateCenters([{...base,codigo:'CENTRO-005'}]);
+  const input=[{...base,codigo:''},{...base,codigo:'CENTRO-007'}];
+  assert.deepEqual(C.planCenterImport(current,input).imported.map(c=>c.codigo),['CENTRO-008','CENTRO-007']);
+  assert.throws(()=>C.planCenterImport(current,[input[1],input[1]]),/duplicado/);
+});

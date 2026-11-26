@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.4.2';
+  const VERSION = '1.4.3';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -70,9 +70,9 @@
     }
     return CODE_PREFIX+String(max+1).padStart(3,'0');
   }
-  function validateCenters(list) {
+  function validateCenters(list, existing=[]) {
     if (!Array.isArray(list) || !list.length || list.length>500) fail('El archivo debe contener entre 1 y 500 centros.');
-    const ids=new Set(), assigned=new Set();
+    const ids=new Set(), assigned=new Set(existing.map(c=>c.codigo));
     return list.map((input,i)=>{
       const c={};
       for (const key of Object.keys(CENTER_FIELDS)) c[key]=input?.[key] ?? '';
@@ -85,6 +85,19 @@
       ids.add(c.codigo);
       return c;
     });
+  }
+  function planCenterImport(current, input) {
+    const imported=validateCenters(input,current);
+    const byCode=new Map(current.map(center=>[center.codigo,center]));
+    const changes=[];
+    for(const center of imported) {
+      const previous=byCode.get(center.codigo);
+      if(!previous || Object.keys(center).some(key=>center[key]!==previous[key])) {
+        byCode.set(center.codigo,center);
+        changes.push({center,previous});
+      }
+    }
+    return {imported,changes,merged:[...byCode.values()]};
   }
   function validateConfig(c) {
     if (!c || typeof c !== 'object') fail('Configuración no válida.');
@@ -254,7 +267,7 @@
     for (const [k,v] of Object.entries(validateCounters(b))) result[k]=Math.max(result[k]||1,v);
     return result;
   }
-  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,nextCode,TIPOS_VIA,validateConfig,dateKey,
+  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,planCenterImport,nextCode,TIPOS_VIA,validateConfig,dateKey,
     normalizeName,encode,validateRecords,validateTXT,generate,validateCounters,mergeCounters,
     quantityFrom,cleanDraft,reviewGroups};
 });
