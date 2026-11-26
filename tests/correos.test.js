@@ -39,7 +39,15 @@ test('Windows-1252 asigna símbolos europeos correctamente',()=>assert.deepEqual
 test('rechaza tabuladores, saltos y controles en cualquier campo',()=>{for(const s of ['A\tB','A\nB','A\rB','A\u0000B','A\u2028B'])assert.throws(()=>run(1,{via:s}),/control/);});
 test('longitudes, CP no numérico y CP numérico sin texto se rechazan',()=>{assert.throws(()=>run(1,{numero:'123456'}),/máximo/);assert.throws(()=>run(1,{cp:'1001'}),/cinco/);assert.throws(()=>run(1,{cp:1001}),/texto/);assert.throws(()=>run(1,{cp:'99000'}),/provincia/);});
 test('no admite productos o perfiles sin implementar',()=>{for(const cfg of [{producto:'XXXXX'},{modalidad:'LS'},{pais:'PT'},{estructura:'2026v001'},{peso:'0'},{alto:'1.5'},{etiquetador:'AB'},{prefijo:'a\tb'}])assert.throws(()=>run(1,{},cfg));});
-test('no genera destinos que requieren aduana sin sus datos',()=>assert.throws(()=>run(1,{cp:'35001'}),/aduanera/));
+test('Canarias, Ceuta y Melilla salen como Documentos (campo 111 = 1)',()=>{
+  for(const cp of ['35008','38001','51001','52001']){const r=run(2,{cp});assert.ok(r.records.every(row=>row[110]==='1'));assert.ok(r.records.every(row=>row.slice(111,156).every(v=>v==='')));}
+  assert.equal(run(1,{cp:'15003'}).records[0][110],'','península sin datos de aduana');
+  assert.equal(C.reviewGroups(run(1,{cp:'35008'}).records)[0].documentos,true);
+});
+test('el validador exige el tipo de envío correcto según el destino',()=>{
+  let r=run(1,{cp:'35008'}).records;r[0][110]='';assert.throws(()=>C.validateRecords(r),/aduana/);
+  r=run(1).records;r[0][110]='1';assert.throws(()=>C.validateRecords(r),/aduana/);
+});
 test('el validador detecta campos, marcas, fin, obligatorios y duplicados alterados',()=>{
   for(const mutate of [r=>r[0].pop(),r=>r[0][0]='R',r=>r[1][0]='C',r=>r[0][185]='',r=>r[0][18]='',r=>r[1][45]=r[0][45],r=>r[0][13]='02',r=>r[0][1]='bad',r=>r[0][25]='a\tb']) {const r=run(2).records;mutate(r);assert.throws(()=>C.validateRecords(r));}
 });
@@ -73,4 +81,23 @@ test('revisión: un grupo por destino con bultos y primera y última referencia'
   assert.deepEqual([g[1].centro,g[1].bultos,g[1].desde,g[1].hasta,g[1].cp],['OTRO CENTRO',1,'VALIJA-20261125-011','VALIJA-20261125-011','15003']);
   assert.equal(g[0].destinatario,'MARÍA CAMANO TOURINAN','los nombres salen como en el TXT');
   assert.equal(g[0].direccion,'C PRUEBA 1');
+});
+test('código interno automático: siguiente libre y sin reutilizar huecos',()=>{
+  assert.equal(C.nextCode([]),'CENTRO-001');
+  assert.equal(C.nextCode([base]),'CENTRO-001');
+  assert.equal(C.nextCode([{codigo:'CENTRO-001'},{codigo:'CENTRO-007'},{codigo:'EJEMPLO-050'}]),'CENTRO-008');
+});
+test('centros importados sin código reciben uno automático y único',()=>{
+  const list=C.validateCenters([{...base,codigo:'CENTRO-004'},{...base,codigo:''},{...base,codigo:undefined}]);
+  assert.deepEqual(list.map(c=>c.codigo),['CENTRO-004','CENTRO-005','CENTRO-006']);
+});
+test('tipo de vía: solo los códigos de Correos',()=>{
+  for(const t of ['C','AV','PLA','TRA','OTR'])assert.doesNotThrow(()=>run(1,{tipoVia:t}));
+  for(const t of ['CL','PZ','c','XYZ'])assert.throws(()=>run(1,{tipoVia:t}),/Tipo de vía/);
+  assert.doesNotThrow(()=>C.validateCenters([{...base,tipoVia:'CL'}]),'una agenda antigua se importa y queda pendiente de revisión');
+  assert.ok(C.centerErrors({...base,tipoVia:'CL'}).some(e=>e.includes('Tipo de vía')));
+});
+test('favorito: se conserva al validar y por defecto es false',()=>{
+  const [a,b]=C.validateCenters([{...base,favorito:true},{...base,codigo:'TEST-2'}]);
+  assert.equal(a.favorito,true);assert.equal(b.favorito,false);
 });

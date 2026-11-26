@@ -19,9 +19,10 @@ Para usar tu agenda, impórtala desde Centros o crea `data/centros.json` siguien
 
 ## Funciones
 
-- Cantidades por centro y resumen del envío.
+- Cantidades por centro y resumen del envío. La pantalla inicial muestra solo los centros favoritos (o todos, si no hay ninguno marcado); la búsqueda recorre toda la agenda.
+- Búsqueda en Centros por nombre, localidad, provincia, dirección o destinatario.
 - Revisión opcional antes de generar: destinos, bultos y referencias tal como irán en el TXT, sin gastar referencias.
-- Edición e importación de centros.
+- Alta, edición, eliminación e importación de centros. El código interno se asigna automáticamente (`CENTRO-001`, `CENTRO-002`…), también a los centros importados sin código. El tipo de vía se elige entre los códigos de Correos (C, AV, PLA, VIA, ALA, AUP, AUV, BUL, CAM, CAR, GLO, PAS, PAJ, RON, SEC, TRA, OTR).
 - Un registro independiente por bulto, con 186 campos, tabuladores y CRLF.
 - Referencias correlativas, configuración del producto y características.
 - Validación de datos y correos sin tildes.
@@ -41,7 +42,7 @@ No añadas a Git la agenda real, copias de seguridad, TXT de envíos, hojas de c
 
 ## Alcance
 
-Formato 2018v002, Paq Premium o Paq Estándar a domicilio, España, sin servicios aduaneros o adicionales. Hasta 150 bultos por archivo. Peso y medidas comunes por envío. La identificación del remitente procede de la cuenta de Correos. Las validaciones internas requieren nombre y dos apellidos.
+Formato 2018v002, Paq Premium o Paq Estándar a domicilio, España, sin servicios adicionales. Los envíos a Canarias, Ceuta y Melilla (CP 35, 38, 51 y 52) se declaran automáticamente como Documentos (campo 111 = 1). Hasta 150 bultos por archivo. Peso y medidas comunes por envío. La identificación del remitente procede de la cuenta de Correos. Las validaciones internas requieren nombre y dos apellidos.
 
 Consulta la [guía del formato de Correos](https://epostal.correos.es/OV2PREENVWEB/plantillas/GuiadeAyuda.pdf).
 

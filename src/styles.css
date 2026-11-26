@@ -10,3 +10,11 @@
 .review-table td:last-child{white-space:nowrap;font-size:12px;font-variant-numeric:tabular-nums}
 .review-table .destination-meta{font-size:12px}
 @media(max-width:760px){.review-table th,.review-table td{padding:10px 8px}.review-table td:first-child{padding-left:12px}.review-table td:last-child,.review-table th:last-child{padding-right:12px}}
+.danger{background:#fff;border-color:#e3b8b1;color:var(--red);margin-left:auto}
+.form-grid label small{font-weight:400;font-size:12px;color:var(--muted)}
+input[readonly]{background:#f3f5f1;color:var(--muted)}
+.center-search{padding:0;max-width:520px;margin-bottom:6px}
+.center-results{margin:0 0 18px}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.fav{font-size:12px;min-height:30px;padding:3px 9px;border-color:var(--line);color:var(--muted);margin-top:-3px}
+.fav.on{color:#8a6410;background:#fbf3df;border-color:#ecd8a8}
