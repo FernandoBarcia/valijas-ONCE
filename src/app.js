@@ -23,7 +23,7 @@
       catch(e) {storageDamaged=true; throw e;}
     }
     localStorage.setItem(KEY,JSON.stringify(state));
-  } catch(e) { storageOK=false; message('No se ha podido recuperar o guardar la copia del navegador. Se han cargado los centros originales. Importa tu copia completa y comprueba el siguiente número de referencia. '+e.message,true); }
+  } catch(e) { storageOK=false; message('No se ha podido recuperar o guardar la copia del navegador. Se han cargado las direcciones originales. Importa tu copia completa y comprueba el siguiente número de referencia. '+e.message,true); }
   function persist(nextState=state) {
     try {
       if(storageDamaged) throw Error('Copia del navegador no válida.');
@@ -68,28 +68,28 @@
     document.querySelectorAll('nav button').forEach(el=>{el.classList.toggle('active',el.dataset.page===id);if(el.dataset.page===id)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
     if(id==='ajustes') fillSettings();
     if(id==='centros') renderCenters();
-    document.title='Valijas ONCE · '+({remesa:'Envío de valijas',centros:'Centros',ajustes:'Configuración',ayuda:'Ayuda'}[id]);
+    document.title='Valijas ONCE · '+({remesa:'Envíos',centros:'Direcciones',ajustes:'Configuración',ayuda:'Ayuda'}[id]);
   }
   // Un centro bloqueado no se puede editar en la tabla: nunca cuenta ni se envía.
   const quantity=c=>C.centerErrors(c).length?0:(state.draft[c.codigo]??0);
-  const shortName=c=>c.localidad==='A CORUÑA'?'A Coruña':c.localidad.toLocaleLowerCase('es').replace(/(^|\s)\S/g,x=>x.toLocaleUpperCase('es'));
+  const shortName=c=>[c.nombreCentro,c.nombre,c.apellido1,c.apellido2].filter(Boolean).join(' · ');
   // Pantalla inicial: solo favoritos (y los que ya llevan bultos). Sin favoritos, todos.
   // Al buscar se busca en toda la agenda.
   const favoritos=()=>state.centros.filter(c=>c.favorito).length;
   const matches=(c,q,fields)=>fields.map(k=>c[k]||'').join(' ').toLocaleLowerCase('es').includes(q);
   function visibleRows() {
     const q=$('search').value.trim().toLocaleLowerCase('es');
-    if(q) return state.centros.filter(c=>matches(c,q,['nombreCentro','localidad','provincia']));
+    if(q) return state.centros.filter(c=>matches(c,q,['nombreCentro','nombre','apellido1','apellido2','localidad','provincia','tipoDireccion']));
     return favoritos()?state.centros.filter(c=>c.favorito||quantity(c)!==0):state.centros;
   }
   function renderRows() {
     const q=$('search').value.trim(), centers=visibleRows();
     $('destinations').innerHTML=centers.map(c=>{
       const errors=C.centerErrors(c), blocked=errors.length>0;
-      return `<tr data-center="${escape(c.codigo)}" class="${quantity(c)>0?'selected':''}"><td><span class="destination-title">${escape(c.nombreCentro)}</span><span class="destination-meta">${escape(c.via)} ${escape(c.numero)} · ${escape(c.cp)} ${escape(c.localidad)}</span>${blocked?`<span class="destination-warning">${escape(errors[0])} Revisa este centro en la agenda.</span>`:''}</td><td><input class="qty" type="number" min="0" max="150" step="1" value="${escape(quantity(c))}" aria-label="Bultos para ${escape(c.nombreCentro)}" ${blocked?'disabled':''}></td><td><button class="reset-quantity quiet" title="Poner a 0" aria-label="Poner a 0 los bultos para ${escape(c.nombreCentro)}" ${blocked||quantity(c)===0?'disabled':''}><span aria-hidden="true">↺</span></button></td></tr>`;
-    }).join('')||'<tr><td colspan="3">No hay centros que coincidan con la búsqueda.</td></tr>';
+      return `<tr data-center="${escape(c.codigo)}" class="${quantity(c)>0?'selected':''}"><td><span class="destination-title">${escape(c.nombreCentro)}</span><span class="destination-meta">${escape(C.ADDRESS_TYPES[C.addressType(c)])} · ${escape([c.nombre,c.apellido1,c.apellido2].filter(Boolean).join(' '))}</span><span class="destination-meta">${escape(c.via)} ${escape(c.numero)} · ${escape(c.cp)} ${escape(c.localidad)}</span>${blocked?`<span class="destination-warning">${escape(errors[0])} Revisa esta dirección en la agenda.</span>`:''}</td><td><input class="qty" type="number" min="0" max="150" step="1" value="${escape(quantity(c))}" aria-label="Bultos para ${escape(c.nombreCentro)}" ${blocked?'disabled':''}></td><td><button class="reset-quantity quiet" title="Poner a 0" aria-label="Poner a 0 los bultos para ${escape(c.nombreCentro)}" ${blocked||quantity(c)===0?'disabled':''}><span aria-hidden="true">↺</span></button></td></tr>`;
+    }).join('')||'<tr><td colspan="3">No hay direcciones que coincidan con la búsqueda.</td></tr>';
     const available=state.centros.filter(c=>C.centerErrors(c).length===0).length;
-    const scope=q?`${centers.length} resultados en toda la agenda`:favoritos()?`Mostrando favoritos (${centers.length} de ${state.centros.length} centros) · Busca para ver el resto`:'Mostrando todos los centros · Marca favoritos en Centros para ver aquí solo esos';
+    const scope=q?`${centers.length} resultados en toda la agenda`:favoritos()?`Mostrando favoritos (${centers.length} de ${state.centros.length} direcciones) · Busca para ver el resto`:'Mostrando todas las direcciones · Marca favoritos en Direcciones para ver aquí solo esos';
     $('available').textContent=`${scope} · ${available} disponibles · Máximo 150 paquetes por archivo`;
     $('center-count').textContent=state.centros.length;
     renderSummary();
@@ -156,7 +156,7 @@
       const groups=C.reviewGroups(result.records), tail=ref=>ref.slice(ref.lastIndexOf('-')+1);
       const encoding={'windows-1252':'Windows-1252','utf-8':'UTF-8','utf-8-bom':'UTF-8 con BOM'}[state.config.codificacion];
       $('review-summary').textContent=`${result.records.length} ${result.records.length===1?'paquete':'paquetes'} para ${groups.length} ${groups.length===1?'destino':'destinos'} · ${state.config.producto==='S0235'?'Paq Premium':'Paq Estándar'} · ${state.config.peso} g · ${state.config.largo} × ${state.config.alto} × ${state.config.ancho} cm · Referencias ${result.referencias[0]} a ${result.referencias.at(-1)} · ${encoding}`;
-      $('review-rows').innerHTML=groups.map(g=>`<tr><td><span class="destination-title">${escape(g.centro)}</span><span class="destination-meta">${escape(g.destinatario)}</span><span class="destination-meta">${escape(g.direccion)} · ${escape(g.cp)} ${escape(g.localidad)} (${escape(g.provincia)})</span>${g.documentos?'<span class="destination-meta">Aduana: se declara como Documentos</span>':''}</td><td>${g.bultos}</td><td title="${escape(g.desde)}${g.bultos>1?' a '+escape(g.hasta):''}">${escape(tail(g.desde))}${g.bultos>1?` a ${escape(tail(g.hasta))}`:''}</td></tr>`).join('');
+      $('review-rows').innerHTML=groups.map(g=>`<tr><td><span class="destination-title">${escape(g.centro)}</span><span class="destination-meta">${escape(g.destinatario)}</span><span class="destination-meta">${escape(g.direccion)} · ${escape(g.cp)} ${escape(g.localidad)} (${escape(g.provincia)})</span><span class="destination-meta">${g.modalidad==='LS'?'Recogida en oficina · Codired '+escape(g.oficinaElegida)+' · SMS '+escape(g.sms):'Entrega a domicilio'}</span>${g.documentos?'<span class="destination-meta">Aduana: se declara como Documentos</span>':''}</td><td>${g.bultos}</td><td title="${escape(g.desde)}${g.bultos>1?' a '+escape(g.hasta):''}">${escape(tail(g.desde))}${g.bultos>1?` a ${escape(tail(g.hasta))}`:''}</td></tr>`).join('');
       edited(); $('review-dialog').showModal();
     } catch(e) { message(e.message,true,'generate'); }
   };
@@ -201,25 +201,43 @@
   };
   function renderCenters() {
     const q=$('center-search').value.trim().toLocaleLowerCase('es');
-    const list=state.centros.filter(c=>!q||matches(c,q,['nombreCentro','localidad','provincia','cp','via','nombre','apellido1','apellido2','codigo']));
-    $('center-results').textContent=q?`${list.length} de ${state.centros.length} centros`:`${state.centros.length} centros · ${favoritos()} favoritos en la pantalla inicial`;
+    const list=state.centros.filter(c=>!q||matches(c,q,['nombreCentro','localidad','provincia','cp','via','nombre','apellido1','apellido2','codigo','tipoDireccion','oficinaElegida']));
+    $('center-results').textContent=q?`${list.length} de ${state.centros.length} direcciones`:`${state.centros.length} direcciones · ${favoritos()} favoritos en la pantalla inicial`;
     $('center-cards').innerHTML=list.map(c=>{
       const errors=C.centerErrors(c);
-      return `<article class="card center-card"><div class="card-top"><span class="badge ${errors.length?'pending':''}">${errors.length?'Pendiente de revisión':'Disponible'}</span><button class="fav ${c.favorito?'on':''}" data-fav="${escape(c.codigo)}" aria-pressed="${c.favorito}" title="Mostrar en la pantalla inicial">${c.favorito?'★ Favorito':'☆ Favorito'}</button></div><h2>${escape(c.nombreCentro)}</h2><p>${escape([c.nombre,c.apellido1,c.apellido2].filter(Boolean).join(' '))}<br>${escape(c.tipoVia+' '+c.via+' '+c.numero)}<br>${escape(c.cp+' '+c.localidad)}</p>${errors.length?`<p class="destination-warning">${errors.map(escape).join('<br>')}</p>`:''}<button class="secondary" data-edit="${escape(c.codigo)}">Editar centro</button></article>`;
-    }).join('')||'<p>No hay centros que coincidan con la búsqueda.</p>';
+      return `<article class="card center-card"><div class="card-top"><span class="badge ${errors.length?'pending':''}">${errors.length?'Pendiente de revisión':'Disponible'}</span><button class="fav ${c.favorito?'on':''}" data-fav="${escape(c.codigo)}" aria-pressed="${c.favorito}" title="Mostrar en la pantalla inicial">${c.favorito?'★ Favorito':'☆ Favorito'}</button></div><h2>${escape(c.nombreCentro)}</h2><p class="hint">${escape(C.ADDRESS_TYPES[C.addressType(c)])} · ${C.deliveryMode(c)==='LS'?'Recogida en oficina elegida':'Entrega a domicilio'}</p><p>${escape([c.nombre,c.apellido1,c.apellido2].filter(Boolean).join(' '))}<br>${escape(c.tipoVia+' '+c.via+' '+c.numero)}<br>${escape(c.cp+' '+c.localidad)}</p>${errors.length?`<p class="destination-warning">${errors.map(escape).join('<br>')}</p>`:''}<button class="secondary" data-edit="${escape(c.codigo)}">Editar dirección</button></article>`;
+    }).join('')||'<p>No hay direcciones que coincidan con la búsqueda.</p>';
   }
   $('center-search').oninput=renderCenters;
   function editCenter(id) {
     editing=id;const c=state.centros.find(c=>c.codigo===id)||{codigo:C.nextCode(state.centros),nombreCentro:'',tipoVia:'C',activo:true,validado:false,favorito:true};
-    // Tipo de vía: solo los códigos de Correos. Un valor antiguo no admitido obliga a elegir uno.
-    const tipoValido=Object.hasOwn(C.TIPOS_VIA,c.tipoVia||'');
-    const tipoVia=`<label>Tipo de vía<select name="tipoVia">${tipoValido?'':`<option value="" selected>${c.tipoVia?escape(c.tipoVia)+' · no admitido, elige otro':'Elige un tipo'}</option>`}${Object.entries(C.TIPOS_VIA).map(([k,v])=>`<option value="${k}" ${k===c.tipoVia?'selected':''}>${escape(v)} (${k})</option>`).join('')}</select></label>`;
-    $('dialog-title').textContent=id?'Editar centro':'Añadir centro';
+    $('dialog-title').textContent=id?'Editar dirección':'Añadir dirección';
     $('delete-center').hidden=!id;
-    // El código interno es automático: se muestra, pero no se escribe.
-    $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>k==='tipoVia'?tipoVia:k==='codigo'
-      ?`<label>${escape(label)}<input name="codigo" value="${escape(c.codigo)}" readonly aria-describedby="codigo-help"><small id="codigo-help">Se asigna automáticamente.</small></label>`
-      :`<label>${escape(label)}${k==='nombreCentro'?' *':''}<input name="${k}" maxlength="${max}" value="${escape(c[k]||'')}" ${k==='nombreCentro'?'required':''} ${k==='cp'?'inputmode="numeric"':''}></label>`).join('');
+    const type=id?C.addressType(c):'';
+    $('address-type').value=type;
+    // Los campos permanecen en el DOM al cambiar de tipo: no se pierden los datos escritos.
+    $('center-fields').innerHTML=Object.entries(C.CENTER_FIELDS).map(([k,[label,max]])=>{
+      const labelText=`<span data-label="${k}">${escape(label)}</span>`;
+      if(k==='tipoVia') return `<label>${labelText}<select name="tipoVia"><option value="">Elige un tipo</option>${Object.entries(C.TIPOS_VIA).map(([key,value])=>`<option value="${key}" ${key===c.tipoVia?'selected':''}>${escape(value)} (${key})</option>`).join('')}</select></label>`;
+      return `<label>${labelText}<input name="${k}" maxlength="${max}" value="${escape(c[k]||'')}" ${k==='codigo'?'readonly':''} ${['cp','oficinaElegida','sms'].includes(k)?'inputmode="numeric"':''}>${k==='codigo'?'<small>Se asigna automáticamente.</small>':''}</label>`;
+    }).join('');
+    function updateAddressFields() {
+      const type=$('address-type').value, form=$('center-form');
+      $('center-fields').hidden=!type;
+      const required=C.requiredFields({tipoDireccion:type});
+      const labels={nombreCentro:type==='banco'?'Banco y sucursal':type==='correos'?'Nombre de la oficina de Correos':'Nombre del centro',nombre:type==='centro'?'Nombre del destinatario':'Nombre del vendedor destinatario'};
+      for(const [key,[label]] of Object.entries(C.CENTER_FIELDS)) {
+        const input=form.elements[key], officeOnly=['oficinaElegida','sms'].includes(key);
+        input.parentElement.hidden=officeOnly && type!=='correos';
+        input.disabled=!type || (officeOnly && type!=='correos');
+        input.required=key==='nombreCentro';
+        input.setAttribute('aria-describedby','required-help');
+        input.parentElement.querySelector('[data-label]').textContent=(labels[key]||label)+(required.includes(key)?' *':'');
+      }
+      $('address-mode').textContent=!type?'Elige primero el tipo de dirección.':type==='correos'?'Recogida en oficina elegida. Introduce la dirección de la oficina, su Codired y el móvil del vendedor para el aviso SMS.':type==='banco'?'Entrega a domicilio en la sucursal bancaria, a nombre del vendedor que recogerá el envío. Introduce la dirección de la sucursal.':'Entrega a domicilio en el centro.';
+    }
+    $('address-type').onchange=updateAddressFields;
+    updateAddressFields();
     $('center-form').elements.activo.checked=c.activo;$('center-form').elements.validado.checked=c.validado;$('center-form').elements.favorito.checked=c.favorito===true;
     const emailInput=$('center-form').elements.email;
     emailInput.type='email';emailInput.autocapitalize='none';emailInput.spellcheck=false;
@@ -244,22 +262,22 @@
   // Eliminar: quita el centro de la agenda y del envío en curso. Los contadores de referencias no cambian.
   $('delete-center').onclick=()=>{
     const c=state.centros.find(c=>c.codigo===editing);if(!c)return;
-    if(state.centros.length===1){$('center-error').textContent='La agenda debe tener al menos un centro. Añade otro antes de eliminar este.';return;}
+    if(state.centros.length===1){$('center-error').textContent='La agenda debe tener al menos una dirección. Añade otra antes de eliminar esta.';return;}
     if(!confirm(`¿Eliminar ${c.nombreCentro} de la agenda? Esta acción no se puede deshacer, salvo restaurando una copia completa.`))return;
     state.centros=state.centros.filter(x=>x.codigo!==editing);delete state.draft[editing];edited();
-    const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,`Centro eliminado: ${c.nombreCentro}.`);
+    const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,`Dirección eliminada: ${c.nombreCentro}.`);
   };
   $('center-form').onsubmit=e=>{
     e.preventDefault();
     try {
       const c=Object.fromEntries(new FormData(e.target));
-      for(const k of Object.keys(C.CENTER_FIELDS))c[k]=c[k].trim();
+      for(const k of Object.keys(C.CENTER_FIELDS))c[k]=(c[k]??'').trim();
       c.activo=e.target.elements.activo.checked;c.validado=e.target.elements.validado.checked;c.favorito=e.target.elements.favorito.checked;
       const errors=C.centerErrors(c,false);if(errors.length)throw Error(errors.join('\n'));
       if(c.validado){const errors=C.centerErrors({...c,activo:true});if(errors.length)throw Error('No se puede marcar como validado:\n'+errors.join('\n'));}
       const list=editing?state.centros.map(old=>old.codigo===editing?c:old):[...state.centros,c];
       state.centros=C.validateCenters(list,{allowLegacyCharacters:true});if(C.centerErrors(c).length)state.draft[c.codigo]=0;
-      const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,'Centro guardado.');
+      const saved=persist();renderCenters();renderRows();$('center-dialog').close();reportSave(saved,'Dirección guardada.');
     }catch(err){$('center-error').textContent=err.message;}
   };
   function previewCenterImport(input) {
@@ -268,17 +286,17 @@
     const updated=plan.changes.length-added;
     const exceedsLimit=plan.merged.length>500;
     const describe=center=>[center.nombreCentro,center.tipoVia+' '+center.via+' '+center.numero,center.cp+' '+center.localidad].join(' · ');
-    $('import-summary').textContent=`${added} nuevos · ${updated} para actualizar · ${plan.imported.length-plan.changes.length} sin cambios`+
-      (exceedsLimit?' · Combinar las agendas superaría el límite de 500 centros.':'');
+    $('import-summary').textContent=`${added} nuevas · ${updated} para actualizar · ${plan.imported.length-plan.changes.length} sin cambios`+
+      (exceedsLimit?' · Combinar las agendas superaría el límite de 500 direcciones.':'');
     const labels={...Object.fromEntries(Object.entries(C.CENTER_FIELDS).map(([key,[label]])=>[key,label])),
-      activo:'Activo',validado:'Validado',favorito:'Favorito'};
+      tipoDireccion:'Tipo de dirección',activo:'Activo',validado:'Validado',favorito:'Favorito'};
     const display=value=>value===true?'Sí':value===false?'No':value||'Vacío';
     $('import-rows').innerHTML=plan.changes.map(({center,previous})=>{
       const fields=previous?Object.keys(labels).filter(key=>center[key]!==previous[key]):[];
       const details=fields.map(key=>`<span class="destination-meta">${escape(labels[key])}: ${escape(display(previous[key]))} → ${escape(display(center[key]))}</span>`).join('');
       return `<tr><td><strong class="destination-title">${escape(center.codigo)}</strong>`+
         `<span class="destination-meta">${escape(describe(center))}</span>${details}</td><td>${previous?'Actualizar':'Añadir'}</td></tr>`;
-    }).join('')||'<tr><td colspan="2">El archivo coincide con los centros de la agenda.</td></tr>';
+    }).join('')||'<tr><td colspan="2">El archivo coincide con las direcciones de la agenda.</td></tr>';
     $('import-merge').disabled=exceedsLimit||!plan.changes.length;
     const apply=(centros,draft)=>{
       const nextState={...state,centros,draft};
@@ -298,14 +316,14 @@
     };
     $('import-replace').onclick=()=>{
       const list=C.validateCenters(input);
-      if(confirm(`¿Sustituir la agenda por los ${list.length} centros del archivo? Se vaciarán todas las cantidades y se conservarán los contadores.`)) apply(list,{});
+      if(confirm(`¿Sustituir la agenda por las ${list.length} direcciones del archivo? Se vaciarán todas las cantidades y se conservarán los contadores.`)) apply(list,{});
     };
     $('import-cancel').onclick=()=>$('import-dialog').close();
     $('import-dialog').showModal();
   }
   function selectFile(action){fileAction=action;$('file-input').value='';$('file-input').click();}
   $('import-centers').onclick=()=>selectFile('centers');$('import-backup').onclick=()=>selectFile('backup');
-  $('export-centers').onclick=()=>jsonDownload(state.centros,'centros.json');
+  $('export-centers').onclick=()=>jsonDownload(state.centros,'direcciones.json');
   $('export-backup').onclick=()=>jsonDownload({...state,exportedAt:new Date().toISOString()},`VALIJAS_COPIA_${stamp()}.json`);
   $('file-input').onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
@@ -317,21 +335,22 @@
         return;
       }
       const restored=parseState(raw);
-      if(!confirm('¿Restaurar centros, configuración y cantidades desde esta copia? Los contadores nunca se reducirán.'))return;
+      if(!confirm('¿Restaurar direcciones, configuración y cantidades desde esta copia? Los contadores nunca se reducirán.'))return;
       restored.counters=C.mergeCounters(state.counters,restored.counters);state=restored;
       if(storageDamaged) {
         localStorage.setItem(KEY,JSON.stringify(state));
         storageDamaged=false;
       }
-      const saved=persist();renderRows();renderCenters();fillSettings();refreshCounter();reportSave(saved,'Centros y datos importados.');
+      const saved=persist();renderRows();renderCenters();fillSettings();refreshCounter();reportSave(saved,'Direcciones y datos importados.');
     }catch(err){message('No se ha importado el archivo: '+err.message,true);}
   };
   window.addEventListener('storage',event=>{
     if(event.key!==KEY)return;
-    try {const incoming=parseState(event.newValue);state.counters=C.mergeCounters(state.counters,incoming.counters);refreshCounter();message('Hay otra pestaña abierta. Utiliza solo una para editar y generar; recarga esta pestaña si has cambiado los centros o la configuración.',true);}catch(e){message('El almacenamiento ha cambiado. Recarga y comprueba tu copia completa antes de generar.',true);}
+    try {const incoming=parseState(event.newValue);state.counters=C.mergeCounters(state.counters,incoming.counters);refreshCounter();message('Hay otra pestaña abierta. Utiliza solo una para editar y generar; recarga esta pestaña si has cambiado las direcciones o la configuración.',true);}catch(e){message('El almacenamiento ha cambiado. Recarga y comprueba tu copia completa antes de generar.',true);}
   });
   $('today').textContent=new Intl.DateTimeFormat('es-ES',{timeZone:'Europe/Madrid',weekday:'long',day:'numeric',month:'long'}).format(new Date());
   $('version').textContent='v'+C.VERSION;
   $('header-version').textContent='v'+C.VERSION;
   fillSettings();renderRows();refreshCounter();persist();
 })();
+

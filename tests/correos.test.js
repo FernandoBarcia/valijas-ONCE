@@ -26,7 +26,7 @@ test('agenda e importación rechazan tildes y ñ en emails',()=>{
   assert.doesNotThrow(()=>C.validateCenters([{...base,email:''}]));
 });
 test('rechaza todos los datos obligatorios vacíos',()=>{for(const k of ['nombre','apellido1','apellido2','tipoVia','via','numero','cp','localidad','provincia']) assert.throws(()=>run(1,{[k]:''}),/obligatorio/);});
-test('rechaza centros inactivos y pendientes',()=>{assert.throws(()=>run(1,{activo:false}),/inactivo/);assert.throws(()=>run(1,{validado:false}),/validar/);});
+test('rechaza direcciones inactivas y pendientes',()=>{assert.throws(()=>run(1,{activo:false}),/inactiva/);assert.throws(()=>run(1,{validado:false}),/validar/);});
 test('rechaza cantidades inválidas y remesa vacía',()=>{for(const n of [0,-1,1.5,151,NaN,Infinity])assert.throws(()=>run(n));assert.throws(()=>run(1,{}, {},{destinos:[]}));});
 test('máximo 150 y contador continuo',()=>{const r=run(150,{}, {},{inicio:25});assert.equal(r.records.length,150);assert.equal(r.referencias[149],'VALIJA-20261125-174');assert.equal(r.siguiente,175);});
 test('el límite aplica a la remesa completa',()=>assert.throws(()=>run(1,{}, {},{centros:[base,{...base,codigo:'TEST-2'}],destinos:[{codigo:'TEST-1',bultos:100},{codigo:'TEST-2',bultos:51}]}),/150/));
@@ -124,7 +124,7 @@ test('importar agenda reserva los códigos explícitos y rechaza duplicados',()=
 });
 test('caracteres de destinatario: rechaza el acento suelto del registro rechazado por Correos',()=>{
   const invalid={...base,nombreCentro:'CENTRO L´',apellido1:'L´'};
-  assert.match(C.centerErrors(invalid,false).join(' '),/Centro:.*U\+00B4.*Primer apellido:.*U\+00B4/);
+  assert.match(C.centerErrors(invalid,false).join(' '),/Nombre de la entidad:.*U\+00B4.*Primer apellido:.*U\+00B4/);
   assert.throws(()=>C.planCenterImport([base],[invalid]),/U\+00B4/);
   assert.throws(()=>run(1,invalid,{codificacion:'utf-8'}),/U\+00B4/);
   for(const key of ['nombre','apellido2','via','numero','complemento','localidad','provincia']) {
@@ -146,5 +146,67 @@ test('TXT: conserva tildes, apóstrofo recto y signos observados y rechaza alter
     const rows=r.records.map(row=>row.slice());
     rows[0][C.F[field]-1]+='´';
     assert.throws(()=>C.validateTXT(rows[0].join('\t')+'\r\n'),/U\+00B4/);
+  }
+});
+
+
+test('agendas anteriores conservan datos y se interpretan como centros',()=>{
+  const [c]=C.validateCenters([base]);
+  assert.equal(c.tipoDireccion,'centro');assert.equal(c.oficinaElegida,'');assert.equal(c.sms,'');
+  for(const [k,v] of Object.entries(base))assert.equal(c[k],v);
+  assert.deepEqual(C.generate({centros:[c],destinos:[{codigo:c.codigo,bultos:1}],fecha:'20261125'}).records,run().records);
+});
+const office={tipoDireccion:'correos',nombreCentro:'OFICINA PRUEBA',oficinaElegida:'0100001',sms:'612345678'};
+test('oficina elegida: producto, modalidad, Codired y SMS correctos para ambos servicios',()=>{
+  for(const [input,output] of [['S0235','S0236'],['S0132','S0133']]) {
+    const r=run(1,office,{producto:input}).records[0];
+    assert.equal(r[C.F.producto-1],output);assert.equal(r[C.F.modalidad-1],'LS');
+    assert.equal(r[C.F.oficinaElegida-1],'0100001');assert.equal(r[C.F.sms-1],'612345678');
+    assert.equal(r[C.F.empresa-1],'');assert.equal(r[C.F.via-1],'OFICINA PRUEBA · PRUEBA');
+    assert.equal(r[C.F.nombre-1],'MARÍA');assert.equal(r[C.F.apellido2-1],'TOURINAN');
+  }
+});
+test('banco: domicilio de sucursal a nombre del vendedor, sin campos de oficina elegida',()=>{
+  const r=run(1,{...office,tipoDireccion:'banco',nombreCentro:'BANCO PRUEBA'}).records[0];
+  assert.equal(r[C.F.modalidad-1],'ST');assert.equal(r[C.F.producto-1],'S0235');
+  assert.equal(r[C.F.via-1],'BANCO PRUEBA · PRUEBA');assert.equal(r[C.F.empresa-1],'');
+  assert.equal(r[C.F.oficinaElegida-1],'');assert.equal(r[C.F.sms-1],'');
+});
+test('los tres tipos mantienen nombre, dos apellidos y dirección obligatorios',()=>{
+  for(const tipoDireccion of Object.keys(C.ADDRESS_TYPES)) for(const key of C.REQUIRED) {
+    if(key==='codigo')continue; // Automático al importar.
+    assert.throws(()=>run(1,{...office,tipoDireccion,[key]:''}),/obligatorio/);
+  }
+});
+test('oficina incompleta se guarda pendiente pero no se envía; formatos incorrectos se rechazan',()=>{
+  const c={...base,...office,sms:'',oficinaElegida:''};
+  assert.doesNotThrow(()=>C.validateCenters([c]));assert.throws(()=>run(1,c),/obligatorio/);
+  for(const value of ['123456','12345678','abcdefg']) assert.throws(()=>run(1,{...office,oficinaElegida:value}),/oficina/);
+  for(const value of ['912345678','61234567','+34612345678','612 345678']) assert.throws(()=>run(1,{...office,sms:value}),/SMS/);
+  for(const tipoDireccion of ['',null,'otro'])assert.throws(()=>C.validateCenters([{...base,tipoDireccion}]),/tipo de dirección/);
+});
+test('TXT alterado rechaza combinaciones de producto/modalidad y datos de oficina inválidos',()=>{
+  for(const [field,value] of [['producto','S0235'],['modalidad','ST'],['oficinaElegida',''],['sms',''],['sms','912345678']]) {
+    const r=run(1,office).records;r[0][C.F[field]-1]=value;assert.throws(()=>C.validateRecords(r));
+  }
+});
+test('remesa mixta y revisión conservan destinatarios y modalidades sin mezclar recogidas',()=>{
+  const centros=[base,{...base,...office,codigo:'OFF-1'},{...base,tipoDireccion:'banco',codigo:'BANK-1',nombreCentro:'BANCO'}];
+  const r=C.generate({centros,destinos:centros.map(c=>({codigo:c.codigo,bultos:2})),fecha:'20261125'});
+  assert.deepEqual(r.records.map(r=>r[C.F.modalidad-1]),['ST','ST','LS','LS','ST','ST']);
+  const groups=C.reviewGroups(r.records);assert.equal(groups.length,3);assert.equal(groups[1].oficinaElegida,'0100001');assert.equal(groups[1].sms,'612345678');
+  assert.equal(new Set(r.referencias).size,6);
+});
+test('tipo y datos de oficina sobreviven exportación, restauración y actualización',()=>{
+  const [c]=C.validateCenters([{...base,...office}]);
+  assert.deepEqual(C.validateCenters(JSON.parse(JSON.stringify([c]))),[c]);
+  const plan=C.planCenterImport([c],[{...c,sms:'712345678'}]);assert.equal(plan.merged[0].sms,'712345678');
+});
+test('nombre del punto de recogida más vía no se trunca al exportar',()=>{
+  assert.throws(()=>run(1,{...office,nombreCentro:'A'.repeat(100)}),/juntos.*100/);
+});
+test('productos de juego con aduana no se declaran automáticamente como Documentos',()=>{
+  for(const cp of ['35008','38001','51001','52001']) for(const tipoDireccion of ['banco','correos']) {
+    assert.throws(()=>run(1,{...office,tipoDireccion,cp}),/aduanera/);
   }
 });

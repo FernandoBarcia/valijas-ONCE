@@ -18,3 +18,6 @@ input[readonly]{background:#f3f5f1;color:var(--muted)}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .fav{font-size:12px;min-height:30px;padding:3px 9px;border-color:var(--line);color:var(--muted);margin-top:-3px}
 .fav.on{color:#8a6410;background:#fbf3df;border-color:#ecd8a8}
+
+
+.address-kind{display:flex;flex-direction:column;gap:7px;margin-top:18px;font-size:13px;font-weight:600}.address-kind select{width:100%;font-weight:400}#address-mode{margin:10px 0 20px}

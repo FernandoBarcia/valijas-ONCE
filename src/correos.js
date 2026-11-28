@@ -4,7 +4,7 @@
   else root.Correos = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.4.9';
+  const VERSION = '1.5.0';
   const DEFAULTS = Object.freeze({estructura:'2018v002', producto:'S0235', etiquetador:'9KAQ',
     modalidad:'ST', pais:'ES', peso:'1000', largo:'20', alto:'15', ancho:'20',
     prefijo:'VALIJA', normalizarEnie:true, codificacion:'windows-1252'});
@@ -12,22 +12,34 @@
   const F = Object.freeze({posicion:1, estructura:2, producto:3, etiquetador:5,
     totalBultos:14, numeroBulto:15, nombre:19, apellido1:20, apellido2:21,
     empresa:23, tipoVia:25, via:26, complemento:27, numero:28, localidad:34,
-    provincia:35, cp:36, pais:38, telefono:42, email:43, referencia:46,
-    modalidad:49, peso:50, largo:51, alto:52, ancho:53, tipoEnvio:111, fin:186});
+    provincia:35, cp:36, pais:38, oficinaElegida:39, telefono:42, email:43, referencia:46,
+    modalidad:49, peso:50, largo:51, alto:52, ancho:53, sms:79, tipoEnvio:111, fin:186});
   // Canarias (35, 38), Ceuta (51) y Melilla (52): fuera del territorio aduanero de la UE.
   // Las valijas se declaran como Documentos: campo 111 = 1, sin más datos de aduana (comprobado con un envío real de Correos).
   const ADUANA = /^(35|38|51|52)/;
   const DOCUMENTOS = '1';
-  const CENTER_FIELDS = Object.freeze({codigo:['Código interno',40],nombreCentro:['Centro',150],
+  const CENTER_FIELDS = Object.freeze({codigo:['Código interno',40],nombreCentro:['Nombre de la entidad',150],
     nombre:['Nombre',300],apellido1:['Primer apellido',50],apellido2:['Segundo apellido',50],
     tipoVia:['Tipo de vía',3],via:['Vía',100],numero:['Número',5],complemento:['Complemento',100],
     cp:['Código postal',5],localidad:['Localidad',100],provincia:['Provincia',40],
-    email:['Correo electrónico',50],telefono:['Teléfono',15]});
+    email:['Correo electrónico',50],telefono:['Teléfono',15],oficinaElegida:['Código de oficina (Codired)',7],sms:['Móvil del destinatario para SMS',9]});
   // Tipos de dirección admitidos por Correos (plantilla de importación, campo 25).
   const TIPOS_VIA = Object.freeze({C:'Calle',AV:'Avenida',PLA:'Plaza',VIA:'Vía',ALA:'Alameda',AUP:'Autopista',
     AUV:'Autovía',BUL:'Bulevar',CAM:'Camino',CAR:'Carretera',GLO:'Glorieta',PAS:'Paseo',PAJ:'Pasaje',
     RON:'Ronda',SEC:'Sector',TRA:'Travesía',OTR:'Otros'});
-  const REQUIRED = ['codigo','nombreCentro','nombre','apellido1','apellido2','tipoVia','via','numero','cp','localidad','provincia'];
+  const REQUIRED = Object.freeze(['codigo','nombreCentro','nombre','apellido1','apellido2','tipoVia','via','numero','cp','localidad','provincia']);
+  const ADDRESS_TYPES = Object.freeze({centro:'Centro',banco:'Banco',correos:'Oficina de Correos'});
+  const addressType = c => c.tipoDireccion === undefined ? 'centro' : c.tipoDireccion;
+  const requiredFields = c => addressType(c)==='correos' ? [...REQUIRED,'oficinaElegida','sms'] : [...REQUIRED];
+  const deliveryMode = c => addressType(c)==='correos' ? 'LS' : 'ST';
+  // Banco/oficina es el lugar de recogida; el vendedor sigue siendo el destinatario.
+  const exportStreet = c => addressType(c)==='centro' ? c.via : `${c.nombreCentro} · ${c.via}`;
+  function checkOffice(code,sms,required) {
+    text(code,'Código de oficina (Codired)',7,required);
+    text(sms,'Móvil del destinatario para SMS',9,required);
+    if(code && !/^\d{7}$/.test(code)) fail('Código de oficina (Codired): debe contener siete dígitos.');
+    if(sms && !/^[67]\d{8}$/.test(sms)) fail('Móvil del destinatario para SMS: nueve dígitos, empezando por 6 o 7.');
+  }
   const CTRL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
   function fail(message) { throw new Error(message); }
   function text(value, label, max, required=false) {
@@ -53,10 +65,11 @@
   }
   function centerErrors(c, forShipment=true, allowLegacyCharacters=false) {
     const errors=[];
-    if (!c || typeof c !== 'object' || Array.isArray(c)) return ['Centro no válido.'];
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return ['Dirección no válida.'];
+    if (!Object.hasOwn(ADDRESS_TYPES,addressType(c))) errors.push('Elige un tipo de dirección: centro, banco u oficina de Correos.');
     for (const [key,[label,max]] of Object.entries(CENTER_FIELDS)) {
       try {
-        text(c[key],label,max,forShipment ? REQUIRED.includes(key) : ['codigo','nombreCentro'].includes(key));
+        text(c[key] ?? (['oficinaElegida','sms'].includes(key)?'':undefined),label,max,forShipment ? requiredFields(c).includes(key) : ['codigo','nombreCentro'].includes(key));
         if (!allowLegacyCharacters) checkRecipientCharacters(key,c[key],label);
       }
       catch(e) { errors.push(e.message); }
@@ -69,8 +82,15 @@
     if (typeof c.email==='string') {
       try { emailForExport(c.email); } catch(e) { errors.push(e.message); }
     }
+    if(addressType(c)==='correos') {
+      try { checkOffice(c.oficinaElegida??'',c.sms??'',forShipment); } catch(e) { errors.push(e.message); }
+    }
     if (forShipment) {
-      if (c.activo!==true) errors.push('Centro inactivo.');
+      if(addressType(c)!=='centro') {
+        try { text(exportStreet(c),'Nombre del punto de recogida y vía juntos',100,true); } catch(e) { errors.push(e.message); }
+        if(ADUANA.test(c.cp)) errors.push('Productos de juego a Canarias, Ceuta o Melilla: la declaración aduanera de mercancías aún no está implementada.');
+      }
+      if (c.activo!==true) errors.push('Dirección inactiva.');
       if (c.validado!==true) errors.push('Destinatario pendiente de validar.');
       if (c.tipoVia && !Object.hasOwn(TIPOS_VIA,c.tipoVia)) errors.push(`Tipo de vía no admitido por Correos: ${c.tipoVia}. Elige uno de la lista.`);
     }
@@ -87,17 +107,18 @@
     return CODE_PREFIX+String(max+1).padStart(3,'0');
   }
   function validateCenters(list, {existing=[],allowLegacyCharacters=false}={}) {
-    if (!Array.isArray(list) || !list.length || list.length>500) fail('El archivo debe contener entre 1 y 500 centros.');
+    if (!Array.isArray(list) || !list.length || list.length>500) fail('El archivo debe contener entre 1 y 500 direcciones.');
     const ids=new Set(), assigned=new Set(existing.map(c=>c.codigo));
     return list.map((input,i)=>{
       const c={};
       for (const key of Object.keys(CENTER_FIELDS)) c[key]=input?.[key] ?? '';
       // Centros importados sin código: se les asigna uno automáticamente.
       if (c.codigo==='') { c.codigo=nextCode(list,assigned); assigned.add(c.codigo); }
+      c.tipoDireccion=input?.tipoDireccion===undefined?'centro':input.tipoDireccion;
       c.activo=input?.activo; c.validado=input?.validado; c.favorito=input?.favorito===true;
       const errors=centerErrors(c,false,allowLegacyCharacters);
-      if (errors.length) fail(`Centro ${i+1}: ${errors.join(' ')}`);
-      if (ids.has(c.codigo)) fail(`Código de centro duplicado: ${c.codigo}.`);
+      if (errors.length) fail(`Dirección ${i+1}: ${errors.join(' ')}`);
+      if (ids.has(c.codigo)) fail(`Código de dirección duplicado: ${c.codigo}.`);
       ids.add(c.codigo);
       return c;
     });
@@ -115,12 +136,13 @@
     }
     return {imported,changes,merged:[...byCode.values()]};
   }
-  function validateConfig(c) {
+  function validateConfig(c, forRecord=false) {
     if (!c || typeof c !== 'object') fail('Configuración no válida.');
     if (c.estructura!=='2018v002') fail('Solo está implementada la estructura 2018v002.');
-    if (!['S0235','S0132'].includes(c.producto)) fail('Producto no soportado: utiliza Paq Premium o Paq Estándar a domicilio.');
+    const products=forRecord && c.modalidad==='LS'?['S0236','S0133']:['S0235','S0132'];
+    if (!products.includes(c.producto)) fail('Producto no compatible con la modalidad de entrega.');
     if (!/^[A-Z0-9]{4}$/.test(c.etiquetador)) fail('Código etiquetador: cuatro letras mayúsculas o dígitos.');
-    if (c.pais!=='ES' || c.modalidad!=='ST') fail('Esta versión admite España y entrega a domicilio (ES / ST).');
+    if (c.pais!=='ES' || !(forRecord?['ST','LS']:['ST']).includes(c.modalidad)) fail('Esta versión admite España y entrega a domicilio (ES / ST).');
     for (const k of ['peso','largo','alto','ancho']) {
       if (typeof c[k]!=='string' || !/^[1-9]\d*$/.test(c[k]) || c[k].length>(k==='peso'?5:3)) fail(`${k}: introduce un entero positivo de hasta ${k==='peso'?5:3} dígitos.`);
     }
@@ -174,24 +196,26 @@
       if (row[0]!==position(i,records.length)) fail(`Registro ${i+1}: posición C/R/F/U incorrecta.`);
       if (row[185]!=='E') fail(`Registro ${i+1}: falta el fin de registro E.`);
       if (row[1]!=='2018v002') fail(`Registro ${i+1}: estructura no soportada.`);
-      for (const k of ['nombre','apellido1','apellido2','empresa','tipoVia','via','numero','cp','localidad','provincia','referencia']) {
+      for (const k of ['nombre','apellido1','apellido2','tipoVia','via','numero','cp','localidad','provincia','referencia']) {
         if (!row[F[k]-1].trim()) fail(`Registro ${i+1}: falta ${k}.`);
       }
       for (const [key,[label,max]] of Object.entries(CENTER_FIELDS)) {
         const field=key==='nombreCentro'?F.empresa:F[key];
         if (!field) continue;
         const fieldLabel=`Registro ${i+1}, ${label}`;
-        text(row[field-1],fieldLabel,max,key==='nombreCentro');
+        text(row[field-1],fieldLabel,max);
         checkRecipientCharacters(key,row[field-1],fieldLabel);
       }
       text(row[45],`Registro ${i+1}, referencia`,100,true);
       if (!/^\d{5}$/.test(row[35])) fail(`Registro ${i+1}: código postal no válido.`);
       if (emailForExport(row[42])!==row[42]) fail(`Registro ${i+1}: el email de Correos no puede contener caracteres no ASCII.`);
       if (row[F.tipoEnvio-1]!==(ADUANA.test(row[35])?DOCUMENTOS:'')) fail(`Registro ${i+1}: tipo de envío de aduana incorrecto.`);
+      if(row[F.modalidad-1]==='LS') checkOffice(row[F.oficinaElegida-1],row[F.sms-1],true);
+      else if(row[F.oficinaElegida-1] || row[F.sms-1]) fail(`Registro ${i+1}: datos de oficina en una entrega a domicilio.`);
       if (row[13]!=='01' || row[14]!=='01') fail(`Registro ${i+1}: cada bulto debe ser una expedición independiente.`);
       if (refs.has(row[45])) fail('Las referencias de envío se repiten.');
       refs.add(row[45]);
-      validateConfig({...DEFAULTS,estructura:row[1],producto:row[2],etiquetador:row[4],pais:row[37],modalidad:row[48],peso:row[49],largo:row[50],alto:row[51],ancho:row[52]});
+      validateConfig({...DEFAULTS,estructura:row[1],producto:row[2],etiquetador:row[4],pais:row[37],modalidad:row[48],peso:row[49],largo:row[50],alto:row[51],ancho:row[52]},true);
     });
     return true;
   }
@@ -213,7 +237,7 @@
     const parcels=[], used=new Set();
     for (const d of destinos) {
       const c=lookup.get(d.codigo);
-      if (!c) fail('Selecciona un centro existente.');
+      if (!c) fail('Selecciona una dirección existente.');
       if (used.has(d.codigo)) fail(`Destino duplicado: ${c.nombreCentro}.`);
       used.add(d.codigo);
       if (!Number.isInteger(d.bultos) || d.bultos<1 || d.bultos>150) fail(`${c.nombreCentro}: introduce de 1 a 150 bultos enteros.`);
@@ -230,9 +254,15 @@
       for (const key of ['estructura','producto','etiquetador','pais','modalidad','peso','largo','alto','ancho']) set(key,config[key]);
       for (const key of ['nombre','apellido1','apellido2']) set(key,normalizeName(c[key],config.normalizarEnie));
       for (const key of ['tipoVia','via','complemento','numero','localidad','provincia','cp','telefono']) set(key,c[key]);
+      set('via',exportStreet(c));
+      set('modalidad',deliveryMode(c));
+      if(deliveryMode(c)==='LS') {
+        set('producto',config.producto==='S0235'?'S0236':'S0133');
+        set('oficinaElegida',c.oficinaElegida); set('sms',c.sms);
+      }
       set('email',emailForExport(c.email));
       if (ADUANA.test(c.cp)) set('tipoEnvio',DOCUMENTOS);
-      set('empresa',c.nombreCentro); set('totalBultos','01'); set('numeroBulto','01');
+      set('empresa',addressType(c)==='centro'?c.nombreCentro:''); set('totalBultos','01'); set('numeroBulto','01');
       set('referencia',`${config.prefijo}-${fecha}-${String(inicio+i).padStart(3,'0')}`);
       set('fin','E');
       return row;
@@ -249,7 +279,7 @@
     if (value==='') return 0;
     return typeof value==='string' && /^\d+$/.test(value) ? Number(value) : NaN;
   }
-  // Cantidades guardadas: solo enteros de 0 a 150, y 0 para los centros que no pueden recibir envíos.
+  // Cantidades guardadas: solo enteros de 0 a 150, y 0 para las direcciones que no pueden recibir envíos.
   function cleanDraft(centros, draft) {
     const result={};
     if (!draft || typeof draft!=='object') return result;
@@ -265,9 +295,9 @@
     for (const r of records) {
       const destinatario=[get(r,'nombre'),get(r,'apellido1'),get(r,'apellido2')].filter(Boolean).join(' ');
       const direccion=[get(r,'tipoVia'),get(r,'via'),get(r,'numero'),get(r,'complemento')].filter(Boolean).join(' ');
-      const key=[get(r,'empresa'),destinatario,direccion,get(r,'cp')].join('|'), last=groups.at(-1);
+      const key=[get(r,'empresa'),destinatario,direccion,get(r,'cp'),get(r,'modalidad'),get(r,'oficinaElegida'),get(r,'sms'),get(r,'producto')].join('|'), last=groups.at(-1);
       if (last && last.key===key) { last.bultos++; last.hasta=get(r,'referencia'); continue; }
-      groups.push({key,centro:get(r,'empresa'),destinatario,direccion,cp:get(r,'cp'),localidad:get(r,'localidad'),
+      groups.push({key,centro:get(r,'empresa')||destinatario,modalidad:get(r,'modalidad'),oficinaElegida:get(r,'oficinaElegida'),sms:get(r,'sms'),producto:get(r,'producto'),destinatario,direccion,cp:get(r,'cp'),localidad:get(r,'localidad'),
         provincia:get(r,'provincia'),documentos:get(r,'tipoEnvio')===DOCUMENTOS,bultos:1,desde:get(r,'referencia'),hasta:get(r,'referencia')});
     }
     return groups.map(({key,...g})=>g);
@@ -286,7 +316,8 @@
     for (const [k,v] of Object.entries(validateCounters(b))) result[k]=Math.max(result[k]||1,v);
     return result;
   }
-  return {VERSION,DEFAULTS,F,CENTER_FIELDS,centerErrors,validateCenters,planCenterImport,nextCode,TIPOS_VIA,validateConfig,dateKey,
+  return {VERSION,DEFAULTS,F,CENTER_FIELDS,REQUIRED,ADDRESS_TYPES,addressType,requiredFields,deliveryMode,exportStreet,centerErrors,validateCenters,planCenterImport,nextCode,TIPOS_VIA,validateConfig,dateKey,
     normalizeName,encode,validateRecords,validateTXT,generate,validateCounters,mergeCounters,
     quantityFrom,cleanDraft,reviewGroups};
 });
+
